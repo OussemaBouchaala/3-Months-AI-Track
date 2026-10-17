@@ -1,0 +1,1 @@
+because useless model that either catch the positive or the negative majority gives high accracy , and near half ROC-AUC which is not relevant 

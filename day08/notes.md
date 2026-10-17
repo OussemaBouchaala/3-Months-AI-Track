@@ -1,0 +1,1 @@
+tokens are the unit for generate text from ai, arabic often costs more because it splits into more tokens to covers multiple meanings 

@@ -1,0 +1,1 @@
+the model is overfitting with 99% train score and 72% validation one, so it was high variance, to remediate we regulation, more data

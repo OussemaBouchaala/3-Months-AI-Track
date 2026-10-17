@@ -1,0 +1,1 @@
+so basicaly the default value was read once in the first call of the function and after that same function intance continue with other calls so we need the None value to make calls independant
