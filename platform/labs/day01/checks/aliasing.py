@@ -1,0 +1,8 @@
+check("b is the same object as a", lambda: var("b") is var("a"), "Plain assignment `b = a` never copies.")
+check("a sees the append made through b", lambda: var("a") == [1, 2, 3, 4])
+check("c is a separate list", lambda: var("c") is not var("a"), "Use a.copy(), list(a) or a[:].")
+check("c has the same values as a", lambda: var("c") == var("a"))
+check("x changed (+= mutates the list in place)", lambda: var("x") == [1, 2, 5])
+check("y did not change (+ builds a new list)", lambda: var("y") == [1, 2])
+check("You explained why x changed", lambda: filled(var("WHY_X_CHANGED"), 10))
+check("You explained why y did not", lambda: filled(var("WHY_Y_DID_NOT"), 10))

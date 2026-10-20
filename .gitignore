@@ -1,1 +1,13 @@
+# Python
 .venv/
+__pycache__/
+*.pyc
+
+# Bench: personal state (progress, API keys)
+platform/progress.local.json
+platform/progress.local.tmp
+platform/llm_settings.local.json
+
+# Generated in work/
+*.npy
+work/.scratch/

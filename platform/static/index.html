@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<style>
+:root {
+  --paper: #F4F6FA;
+  --sheet: #FFFFFF;
+  --ink: #172340;
+  --ink-soft: #56627E;
+  --line: #D9E0EB;
+  --cobalt: #2650E0;
+  --cobalt-soft: #E6ECFD;
+  --marker: #FFE066;
+  --gold: #E8A317;
+  --ok: #1E8556;
+  --ok-soft: #EAF6EF;
+  --err: #C13A2A;
+  --editor: #13203A;
+  --editor-text: #E4EAF6;
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  --r-sm: 4px;
+  --r-md: 8px;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--sans); font-size: 15px; line-height: 1.55;
+  color: var(--ink); background: var(--paper);
+  display: grid; grid-template-rows: auto auto 1fr; grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 2px; }
+a { color: var(--cobalt); }
+[hidden] { display: none !important; }
+
+/* ---------- Header: arena + level path ---------- */
+header {
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto; gap: 18px; align-items: center;
+  padding: 10px 20px; background: var(--sheet); border-bottom: 1px solid var(--line); min-width: 0;
+}
+.brand { display: flex; flex-direction: column; line-height: 1.15; }
+.brand strong { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+.brand span { font-size: 11.5px; color: var(--ink-soft); }
+.arena-btn {
+  display: flex; flex-direction: column; align-items: flex-start; text-align: left;
+  border: 1px solid var(--line); background: var(--paper); border-radius: var(--r-md); padding: 5px 12px; line-height: 1.25;
+}
+.arena-btn:hover { border-color: var(--cobalt); }
+.arena-btn small { font-size: 11px; color: var(--cobalt); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.arena-btn b { font-weight: 500; font-size: 14px; white-space: nowrap; }
+.arena-btn b::after { content: "  \25BE"; color: var(--ink-soft); font-size: 11px; }
+.path { display: flex; align-items: center; min-width: 0; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: thin; }
+.node { display: flex; flex-direction: column; align-items: center; gap: 1px; border: 0; background: none; padding: 0 2px; flex: 0 0 auto; }
+.node .dot {
+  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  border: 2px solid var(--line); background: var(--sheet); font-size: 13px; font-weight: 600; color: var(--ink-soft);
+  transition: transform .15s;
+}
+.node:hover .dot { transform: scale(1.08); }
+.node .stars { font-size: 9.5px; letter-spacing: 1px; color: var(--line); line-height: 1; height: 10px; }
+.node .stars .on { color: var(--gold); }
+.node.cleared .dot { background: var(--ok); border-color: var(--ok); color: #fff; }
+.node.today .dot { border-color: var(--gold); }
+.node.active .dot { border-color: var(--cobalt); color: var(--cobalt); box-shadow: 0 0 0 3px var(--cobalt-soft); }
+.node.active.cleared .dot { color: #fff; }
+.link { width: 22px; height: 2px; background: var(--line); flex: 0 0 auto; margin-bottom: 11px; }
+.link.done { background: var(--ok); }
+.stats { display: flex; gap: 16px; font-size: 12.5px; color: var(--ink-soft); }
+.stats b { display: block; font-size: 16px; color: var(--ink); font-weight: 600; line-height: 1.2; }
+
+/* ---------- Step bar ---------- */
+.stepbar {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 16px; align-items: center;
+  padding: 10px 20px; background: var(--paper); border-bottom: 1px solid var(--line); min-width: 0;
+}
+.level-title { min-width: 0; }
+.level-title small { display: block; font-size: 12px; color: var(--ink-soft); }
+.level-title h1 { margin: 0; font-size: 19px; font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.steps { display: flex; align-items: center; }
+.step {
+  display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: var(--sheet);
+  border-radius: 999px; padding: 4px 12px 4px 5px; font-size: 13.5px; color: var(--ink-soft); white-space: nowrap;
+}
+.step .num { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; background: var(--paper); border: 1px solid var(--line); }
+.step .sub { font-size: 11.5px; color: var(--ink-soft); }
+.step.done { color: var(--ok); }
+.step.done .num { background: var(--ok); border-color: var(--ok); color: #fff; }
+.step.next:not(.current) { border-style: dashed; border-color: var(--cobalt); }
+.step.current { color: var(--sheet); background: var(--ink); border-color: var(--ink); }
+.step.current .num { background: var(--sheet); color: var(--ink); border-color: var(--sheet); }
+.step.current .sub { color: rgba(255,255,255,.7); }
+.step-gap { width: 16px; height: 2px; background: var(--line); flex: 0 0 auto; }
+.step-gap.done { background: var(--ok); }
+.icon-btn {
+  display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--sheet);
+  border-radius: var(--r-md); padding: 6px 11px; font-size: 13.5px;
+}
+.icon-btn:hover { border-color: var(--ink-soft); }
+.icon-btn svg { width: 16px; height: 16px; }
+.icon-btn .dotmark { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+
+/* ---------- Main: guide (left) + workbench (right) ---------- */
+main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) auto; min-height: 0; min-width: 0; }
+main > * { min-width: 0; min-height: 0; }
+.guide {
+  overflow-y: auto; border-right: 1px solid var(--line);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(rgba(38,80,224,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(38,80,224,.045) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.guide-inner { padding: 20px 28px 40px; max-width: 780px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--cobalt); margin: 0 0 6px; }
+.guide h2.title { font-size: 23px; line-height: 1.25; margin: 0 0 10px; font-weight: 600; letter-spacing: -0.01em; }
+.why { margin: 0 0 18px; padding-left: 12px; border-left: 3px solid var(--cobalt); color: var(--ink-soft); max-width: 68ch; }
+.prose h3 { font-size: 18px; margin: 26px 0 8px; font-weight: 600; }
+.prose h3:first-child { margin-top: 4px; }
+.prose h4 { font-size: 15.5px; margin: 20px 0 6px; }
+.prose p, .prose li { max-width: 68ch; }
+.prose ul, .prose ol { padding-left: 22px; }
+.prose li { margin: 3px 0; }
+.prose code { font-family: var(--mono); font-size: 13px; background: var(--sheet); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+.snippet { margin: 12px 0 16px; border-radius: var(--r-md); overflow: hidden; background: var(--editor); }
+.snippet > pre { margin: 0; padding: 14px 16px; overflow-x: auto; color: var(--editor-text); font: 13px/1.6 var(--mono); }
+.snippet pre code { background: none; border: 0; padding: 0; font-size: inherit; color: inherit; }
+.snippet-bar { display: flex; justify-content: flex-end; gap: 6px; padding: 6px 8px; background: rgba(255,255,255,.04); border-top: 1px solid rgba(255,255,255,.08); }
+.snippet-bar button { border: 1px solid rgba(255,255,255,.18); background: none; color: var(--editor-text); font-size: 12.5px; padding: 3px 10px; border-radius: var(--r-sm); }
+.snippet-bar button:hover { background: rgba(255,255,255,.08); }
+.snippet-bar button[data-try] { border-color: rgba(255,224,102,.6); color: var(--marker); }
+.card { margin-top: 18px; padding: 12px 16px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-md); font-size: 14px; }
+.card h3 { font-size: 14.5px; margin: 0 0 6px; }
+.card ul { margin: 0; padding-left: 20px; }
+.next-bar { display: flex; align-items: center; gap: 12px; margin-top: 26px; padding-top: 18px; border-top: 1px dashed var(--line); flex-wrap: wrap; }
+.next-bar .hint { font-size: 13px; color: var(--ink-soft); }
+
+/* Exercise navigator + brief */
+.ex-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.ex-dots { display: flex; gap: 6px; }
+.ex-dot {
+  min-width: 30px; height: 26px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--sheet);
+  font-size: 12.5px; font-weight: 600; color: var(--ink-soft);
+}
+.ex-dot.passed { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.ex-dot.current { background: var(--ink); border-color: var(--ink); color: #fff; }
+.ex-count { font-size: 13px; color: var(--ink-soft); }
+.brief h3 { font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); margin: 22px 0 6px; }
+.brief ol li::marker { color: var(--cobalt); font-weight: 600; }
+.topic { padding: 10px 14px; background: var(--cobalt-soft); border-radius: var(--r-md); margin: 4px 0; }
+.topic p { margin: 0; }
+
+/* Missions */
+.task { display: grid; grid-template-columns: 24px 1fr; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.task input { width: 17px; height: 17px; margin-top: 3px; accent-color: var(--ok); cursor: pointer; }
+.task.checked > span { color: var(--ink-soft); text-decoration: line-through; text-decoration-color: rgba(86,98,126,.5); }
+.task a { font-weight: 500; text-underline-offset: 2px; }
+.task a::after { content: "\2197"; font-size: .8em; margin-left: 2px; text-decoration: none; display: inline-block; }
+.task .auto { display: inline-block; margin-left: 6px; font-size: 11.5px; color: var(--ok); }
+.task-legend { font-size: 12.5px; color: var(--ink-soft); margin: 0 0 6px; }
+.cleared-banner { display: flex; gap: 14px; align-items: center; padding: 14px 16px; margin-bottom: 16px; border-radius: var(--r-md); background: var(--ok-soft); border: 1px solid var(--ok); }
+.cleared-banner .big { font-size: 26px; color: var(--gold); letter-spacing: 2px; }
+
+/* Quiz */
+.q { margin: 0 0 22px; }
+.q-text { font-weight: 500; margin-bottom: 8px; }
+.q-text pre { font: 13px/1.55 var(--mono); background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 8px 10px; margin: 6px 0 0; white-space: pre-wrap; }
+.opt { display: flex; gap: 8px; align-items: flex-start; padding: 7px 10px; margin: 4px 0; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-sm); cursor: pointer; font-size: 14px; }
+.opt input { margin-top: 4px; accent-color: var(--cobalt); }
+.opt code { font-family: var(--mono); font-size: 13px; }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--err); background: #FBECEA; }
+.explain { font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; }
+.score { padding: 12px 14px; border-radius: var(--r-md); background: var(--sheet); border: 1px solid var(--line); margin-bottom: 18px; }
+.score.pass { border-color: var(--ok); }
+.score.fail { border-color: var(--err); }
+
+/* Buttons */
+.btn { border: 1px solid var(--line); background: var(--sheet); padding: 7px 14px; border-radius: var(--r-sm); font-size: 14px; }
+.btn:hover { border-color: var(--ink-soft); }
+.btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); font-weight: 500; }
+.btn.primary:hover { background: #24345C; }
+.btn.go { background: var(--cobalt); border-color: var(--cobalt); color: #fff; font-weight: 500; }
+.btn.go:hover { background: #1D41BD; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ---------- Workbench ---------- */
+.bench { display: grid; grid-template-rows: auto minmax(160px, 1fr) auto auto minmax(130px, 0.75fr); grid-template-columns: minmax(0, 1fr); min-height: 0; background: var(--sheet); }
+.bench-head { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 16px; background: var(--editor); color: var(--editor-text); min-width: 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+.bench-head .label { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
+.bench-head .label small { color: rgba(228,234,246,.55); font-weight: 400; margin-left: 8px; }
+.bench-head .chip { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: rgba(255,224,102,.16); color: var(--marker); white-space: nowrap; }
+.bench-head button { border: 1px solid rgba(255,255,255,.18); background: none; color: var(--editor-text); border-radius: var(--r-sm); font-size: 12.5px; padding: 3px 9px; }
+.bench-head button:hover { background: rgba(255,255,255,.08); }
+.editor-wrap { min-height: 0; min-width: 0; overflow: hidden; position: relative; background: var(--editor); }
+.CodeMirror { height: 100%; font: 13.5px/1.6 var(--mono); background: var(--editor); color: var(--editor-text); }
+.CodeMirror-gutters { background: var(--editor); border-right: 1px solid rgba(255,255,255,.07); }
+.CodeMirror-linenumber { color: rgba(228,234,246,.32); }
+.CodeMirror-cursor { border-left: 2px solid var(--marker); }
+.CodeMirror-selected, .CodeMirror-focused .CodeMirror-selected { background: rgba(255,224,102,.18) !important; }
+.cm-s-default .cm-keyword { color: #8FB0FF; }
+.cm-s-default .cm-def { color: #FFE066; }
+.cm-s-default .cm-string { color: #9FE0B8; }
+.cm-s-default .cm-comment { color: #7F8DA8; font-style: italic; }
+.cm-s-default .cm-number { color: #F7B27A; }
+.cm-s-default .cm-builtin { color: #C9B6FF; }
+.cm-s-default .cm-variable, .cm-s-default .cm-variable-2, .cm-s-default .cm-property { color: var(--editor-text); }
+.cm-s-default .cm-operator { color: #B9C4DA; }
+.cm-s-default .cm-meta { color: #F7B27A; }
+.fallback-editor { width: 100%; height: 100%; border: 0; padding: 12px 16px; background: var(--editor); color: var(--editor-text); font: 13.5px/1.6 var(--mono); resize: none; }
+.predict { padding: 10px 16px 0; border-top: 1px solid var(--line); }
+.predict label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+.predict label span { font-weight: 400; color: var(--ink-soft); font-size: 12.5px; }
+.predict textarea {
+  width: 100%; min-height: 50px; max-height: 130px; resize: vertical; padding: 8px 10px;
+  font: 13px/1.5 var(--mono); color: var(--ink); border: 0; border-radius: 2px;
+  background-color: #FFF6C7; box-shadow: inset 0 -2px 0 #E8C63A;
+}
+.actions { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.actions .hint { margin-left: auto; font-size: 12px; color: var(--ink-soft); }
+.actions label { font-size: 13px; display: flex; gap: 5px; align-items: center; }
+.save-state { font-size: 12.5px; color: var(--ink-soft); }
+.output { overflow-y: auto; padding: 12px 16px 20px; min-height: 0; }
+.out-meta { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
+.out-meta .ok { color: var(--ok); font-weight: 500; }
+.out-meta .bad { color: var(--err); font-weight: 500; }
+.stdout, .stderr { margin: 0 0 8px; font: 13px/1.55 var(--mono); white-space: pre-wrap; word-break: break-word; }
+.stderr { color: var(--err); }
+.output img { max-width: 100%; border: 1px solid var(--line); border-radius: var(--r-sm); margin: 6px 0; background: #fff; }
+.compare { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-bottom: 10px; }
+.compare > div { padding: 8px 10px; border-radius: var(--r-sm); font: 12.5px/1.5 var(--mono); white-space: pre-wrap; max-height: 160px; overflow: auto; }
+.compare .yours { background: #FFF6C7; }
+.compare .actual { background: var(--paper); border: 1px solid var(--line); }
+.compare b { display: block; font-family: var(--sans); font-size: 12px; margin-bottom: 2px; }
+.match-line { display: block; }
+.match-line.hit::before { content: "\2713  "; color: var(--ok); }
+.match-line.miss::before { content: "\2717  "; color: var(--err); }
+.match-sum { display: block; font-family: var(--sans); font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+.empty { color: var(--ink-soft); font-size: 14px; }
+.checks-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; font-size: 14px; flex-wrap: wrap; }
+.checks-head b { font-size: 15px; }
+.checks-head.all b { color: var(--ok); }
+.checks-head.some b { color: var(--err); }
+.checks { list-style: none; margin: 0; padding: 0; }
+.checks li { display: grid; grid-template-columns: 20px 1fr; gap: 6px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.checks li:last-child { border-bottom: 0; }
+.checks .icon { font-weight: 600; text-align: center; }
+.checks .pass .icon { color: var(--ok); }
+.checks .fail .icon { color: var(--err); }
+.checks .hint { display: block; color: var(--ink-soft); font-size: 13px; margin-top: 2px; }
+.checks .detail { display: block; margin: 4px 0 0; font: 12.5px/1.5 var(--mono); color: var(--err); white-space: pre-wrap; word-break: break-word; }
+.bench-rail { display: none; width: 40px; background: var(--editor); border: 0; color: var(--editor-text); writing-mode: vertical-rl; font-size: 13px; padding: 14px 0; letter-spacing: .04em; }
+.bench-rail:hover { background: #1B2B4C; }
+main.bench-collapsed { grid-template-columns: minmax(0, 1fr) auto; }
+main.bench-collapsed .bench { display: none; }
+main.bench-collapsed .bench-rail { display: block; }
+
+/* ---------- Drawers & overlays ---------- */
+.scrim { position: fixed; inset: 0; background: rgba(23,35,64,.35); z-index: 40; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 100vw); z-index: 41; background: var(--sheet);
+  box-shadow: -12px 0 32px rgba(23,35,64,.18); display: grid; grid-template-rows: auto 1fr auto;
+}
+.drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--sheet); }
+.drawer-head h2 { margin: 0; font-size: 17px; }
+.drawer-head p { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-soft); max-width: 70ch; }
+.drawer textarea { width: 100%; height: 100%; border: 0; padding: 16px 18px; font: 14px/1.6 var(--mono); color: var(--ink); resize: none; }
+.drawer-foot { padding: 8px 18px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-soft); }
+.map {
+  position: fixed; inset: 4vh 4vw; z-index: 41; background: var(--paper); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 24px 60px rgba(23,35,64,.3); display: grid; grid-template-rows: auto 1fr;
+}
+.map-body { overflow-y: auto; padding: 18px 22px 28px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; align-content: start; }
+.arena { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; }
+.arena.current { border-color: var(--cobalt); box-shadow: 0 0 0 3px var(--cobalt-soft); }
+.arena.locked { background: transparent; border-style: dashed; }
+.arena small { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); }
+.arena h3 { margin: 2px 0 2px; font-size: 16px; }
+.arena .meta { font-size: 12.5px; color: var(--ink-soft); }
+.arena .bar { height: 6px; background: var(--paper); border-radius: 999px; overflow: hidden; margin: 10px 0; }
+.arena .bar span { display: block; height: 100%; background: var(--ok); }
+.arena .levels { display: flex; flex-wrap: wrap; gap: 2px; }
+.arena ul { margin: 8px 0 0; padding-left: 0; list-style: none; font-size: 13.5px; }
+.arena li { margin: 4px 0; }
+.arena .gate { font-size: 12.5px; margin-top: 8px; color: var(--ink-soft); }
+.locked-copy code { font-family: var(--mono); font-size: 12px; background: var(--paper); padding: 2px 6px; border-radius: 3px; }
+
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 9px 16px; border-radius: var(--r-md); font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 60; }
+.toast.show { opacity: 1; }
+.fatal { padding: 28px; color: var(--ink-soft); max-width: 60ch; }
+
+@media (max-width: 1180px) {
+  .stats { display: none; }
+  header { grid-template-columns: auto auto minmax(0, 1fr); }
+  .stepbar { grid-template-columns: minmax(0, 1fr) auto; row-gap: 8px; }
+  .steps { grid-column: 1 / -1; grid-row: 2; overflow-x: auto; }
+  .step .sub { display: none; }
+}
+@media (max-width: 860px) {
+  body { display: block; overflow: auto; }
+  header { grid-template-columns: 1fr; gap: 8px; }
+  .brand { display: none; }
+  main, main.bench-collapsed { display: block; }
+  .guide { border-right: 0; overflow: visible; }
+  .bench, main.bench-collapsed .bench { display: grid; height: 88vh; border-top: 1px solid var(--line); }
+  .bench-rail, main.bench-collapsed .bench-rail, #collapseBtn { display: none; }
+  .guide-inner { padding: 18px 16px 32px; }
+  .stepbar, header { padding-left: 16px; padding-right: 16px; }
+  .map { inset: 0; border-radius: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+
+/* ---- Interactive lessons ---- */
+.goal { margin: 0 0 14px; padding: 10px 14px; background: var(--ok-soft); border-radius: var(--r-md); font-size: 14px; }
+.lprog { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ink-soft); margin: 0 0 8px; }
+.lprog-bar { flex: 1; height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.lprog-bar span { display: block; height: 100%; background: var(--cobalt); transition: width .3s; }
+.lsec { padding: 6px 0 14px; border-bottom: 1px solid var(--line); }
+.lsec.fresh { animation: fadein .35s ease; }
+@keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.lsec-n { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; margin-top: 14px; }
+.lsec h3 { margin-top: 2px !important; }
+.lsec-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.linkish { border: 0; background: none; color: var(--cobalt); font-size: 13px; cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+.btn.small { padding: 5px 11px; font-size: 13px; }
+.blk { margin: 14px 0; padding: 12px 16px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--sheet); }
+.blk > p:last-child { margin-bottom: 0; }
+.blk-tag { font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 6px; color: var(--ink-soft); }
+.blk-q { font-weight: 600; margin: 0 0 8px; }
+.blk.hook { border-left: 4px solid var(--gold); background: #FFF8E6; }
+.blk.hook .blk-tag { color: #9A6A00; }
+.blk.analogy { border-left: 4px solid #7A5AF8; background: #F4F1FF; }
+.blk.analogy .blk-tag { color: #5B3FD6; }
+.blk.key { border-left: 4px solid var(--ok); background: var(--ok-soft); }
+.blk.key .blk-tag { color: var(--ok); }
+.blk.mistake { border-left: 4px solid var(--err); background: #FDF1EF; }
+.blk.mistake .blk-tag { color: var(--err); }
+.blk.predict, .blk.explain { border-left: 4px solid var(--marker); background: #FFFDF0; }
+.blk.check, .blk.cards { border-left: 4px solid var(--cobalt); background: var(--cobalt-soft); }
+.blk.check .blk-tag, .blk.cards .blk-tag { color: var(--cobalt); }
+.blk textarea { width: 100%; min-height: 56px; font: 14px var(--sans); padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--r-sm); margin-bottom: 8px; resize: vertical; box-sizing: border-box; }
+.blk .answer, .blk .fb { margin-top: 10px; padding: 10px 12px; background: var(--sheet); border-radius: var(--r-sm); border: 1px dashed var(--line); }
+.chk-opt { display: block; width: 100%; text-align: left; margin: 5px 0; padding: 8px 11px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--sheet); font: 14px var(--sans); cursor: pointer; }
+.chk-opt:hover:not(:disabled) { border-color: var(--cobalt); }
+.chk-opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.chk-opt.wrong { border-color: var(--err); background: #FBECEA; }
+.chk-opt:disabled { cursor: default; color: var(--ink); }
+.flash { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.fcard { min-height: 84px; padding: 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--sheet); font: 13.5px var(--sans); cursor: pointer; text-align: left; }
+.fcard .f-a { display: none; } .fcard.flipped .f-q { display: none; } .fcard.flipped .f-a { display: block; }
+.fcard.flipped { background: #FFFDF0; border-color: var(--gold); }
+details.blk.reveal summary { cursor: pointer; font-weight: 600; color: var(--cobalt); }
+.snippet-out { background: #0D1628; color: #CFE3C8; padding: 10px 14px; border-top: 1px solid rgba(255,255,255,.08); }
+.snippet-out pre { margin: 0; white-space: pre-wrap; font: 12.5px/1.5 var(--mono); }
+.snippet-out img { max-width: 100%; background: #fff; margin-top: 6px; border-radius: 4px; }
+.blk.example { border-left: 4px solid var(--ok); background: #F3FAF6; }
+.blk.example .blk-tag { color: var(--ok); }
+.your-turn { margin-top: 18px; }
+.your-turn .blk-tag { color: var(--cobalt); }
+.err { color: var(--err); } .okc { color: var(--ok); }
+.ai-quick { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 10px 0; }
+.ai-quick button { border: 1px solid var(--line); background: var(--paper); border-radius: 99px; font-size: 12px; padding: 3px 9px; cursor: pointer; }
+.ai-msg.warn { background: #FFF8E6; }
+.ai-gear { white-space: nowrap; }
+.settings { position: fixed; z-index: 70; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 40px); overflow-y: auto; background: var(--sheet); border-radius: var(--r-md); box-shadow: 0 16px 40px rgba(23,35,64,.3); }
+.settings .drawer-head p { margin: 4px 0 0; font-size: 13px; color: var(--ink-soft); }
+.set-body { padding: 14px 18px 20px; }
+.set-label { font-weight: 600; margin: 14px 0 6px; display: flex; justify-content: space-between; }
+.set-label a { font-weight: 400; font-size: 13px; }
+.prov { display: grid; gap: 6px; }
+.prov-opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); cursor: pointer; }
+.prov-opt.on { border-color: var(--cobalt); background: var(--cobalt-soft); }
+.prov-opt small { display: block; color: var(--ink-soft); font-size: 12.5px; }
+.settings input[type=password], .settings input#setModel { flex: 1; width: 100%; box-sizing: border-box; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--r-sm); font: 14px var(--mono); }
+.settings .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.model-pick { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.model-pick .hint { flex-basis: 100%; margin: 0 0 2px; font-size: 13px; color: var(--ink-soft); }
+.model-chip { border: 1px solid var(--line); background: var(--paper); border-radius: 99px; padding: 4px 10px; font: 12.5px var(--mono); cursor: pointer; }
+.model-chip:hover { border-color: var(--cobalt); }
+.model-chip.on { border-color: var(--cobalt); background: var(--cobalt-soft); color: var(--cobalt); }
+/* ---- AI tutor ---- */
+.ai-fab { position: fixed; right: 20px; bottom: 20px; z-index: 60; border: 0; border-radius: 999px; padding: 11px 16px; background: var(--cobalt); color: #fff; font: 600 14px var(--sans); cursor: pointer; box-shadow: 0 6px 18px rgba(23,35,64,.25); }
+.ai-panel { position: fixed; right: 20px; bottom: 72px; z-index: 60; width: min(420px, calc(100vw - 32px)); height: min(560px, calc(100vh - 110px)); display: none; flex-direction: column; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: 0 12px 32px rgba(23,35,64,.22); }
+.ai-panel.open { display: flex; }
+.ai-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.ai-head small { color: var(--ink-soft); display: block; font-size: 12px; }
+.ai-head button { border: 0; background: none; font-size: 18px; cursor: pointer; color: var(--ink-soft); }
+.ai-log { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.ai-msg { padding: 8px 11px; border-radius: var(--r-md); font-size: 14px; max-width: 92%; overflow-wrap: anywhere; }
+.ai-msg.user { align-self: flex-end; background: var(--cobalt-soft); }
+.ai-msg.bot { align-self: flex-start; background: var(--paper); }
+.ai-msg.err { color: var(--err); }
+.ai-msg pre { white-space: pre-wrap; font-size: 12.5px; }
+.ai-form { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); }
+.ai-form textarea { flex: 1; resize: none; height: 54px; font: 14px var(--sans); padding: 7px; border: 1px solid var(--line); border-radius: var(--r-sm); }
+.ai-form button { border: 0; border-radius: var(--r-sm); background: var(--cobalt); color: #fff; padding: 0 14px; font-weight: 600; cursor: pointer; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><strong>Bench</strong><span>Oussema's 12-week plan</span></div>
+  <button class="arena-btn" id="arenaBtn" title="Open the map of all arenas"><small id="arenaKicker"></small><b id="arenaName"></b></button>
+  <nav class="path" id="path" aria-label="Levels in this arena"></nav>
+  <div class="stats" id="stats"></div>
+</header>
+<div class="stepbar" id="stepbar"></div>
+<main id="main">
+  <section class="guide" id="guide" aria-live="polite"></section>
+  <section class="bench" id="bench"></section>
+  <button class="bench-rail" id="benchRail" title="Show the code editor">Code editor ‹</button>
+</main>
+<div id="overlay"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ======================================================================
+   Bench: each week is an ARENA, each day a LEVEL.
+   A level is played in order: Learn -> Practice -> Quiz -> (Boss) -> Missions.
+   Left = the guide for the current step. Right = the workbench (code editor),
+   always open: a scratchpad while learning, the exercise while practising.
+   ====================================================================== */
+const S = { weeks: [], progress: {}, week: 0, day: null, step: "learn", ex: 0, file: null, fileDay: null, editor: null, quizState: {}, benchCollapsed: false };
+const $ = (sel, el = document) => el.querySelector(sel);
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const todayISO = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const SCRATCH = "scratch.py";
+const SCRATCH_STARTER = "# Scratchpad: type anything here to test an idea while you read.\n# \"Try it in the editor\" on a lesson example puts it here and runs it.\n\n";
+const ICON_NOTE = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 2.5h7l3 3v8H3z"/><path d="M10 2.5v3h3M5.5 8.5h5M5.5 11h3.5"/></svg>`;
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2400);
+}
+async function api(path, body) {
+  const res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
+  return res.json();
+}
+
+/* ---------- Progress ---------- */
+const P = () => S.progress;
+function ensureProgress() {
+  const p = S.progress;
+  for (const k of ["tasks", "weekTasks", "quiz", "retest", "predictions", "checks", "lessons", "notes", "steps"]) p[k] ??= {};
+  p.activity ??= []; p.settings ??= { predictFirst: true }; p.last ??= {};
+}
+let saveProgressTimer;
+function saveProgress() {
+  clearTimeout(saveProgressTimer);
+  saveProgressTimer = setTimeout(() => api("/api/progress", S.progress).catch(e => toast("Progress not saved: " + e.message)), 400);
+}
+function logActivity() {
+  const t = todayISO();
+  if (!P().activity.includes(t)) { P().activity.push(t); saveProgress(); }
+}
+const allDays = () => S.weeks.flatMap(w => w.days);
+const findDay = id => allDays().find(d => d.id === id);
+const weekOfDay = id => S.weeks.findIndex(w => w.days.some(d => d.id === id));
+const checkKey = (d, name) => `${d.folder}/${name}`;
+const labPassed = (d, f) => { const c = P().checks[checkKey(d, f.name)]; return !!(c && c.passed === c.total); };
+const checkedLabs = d => d.files.filter(f => f.has_check);
+/* An exercise's name comes from its brief; fall back to the file name if a brief has no title. */
+const labTitle = f => f.title || f.name;
+
+function dayDone(d) { const t = P().tasks[d.id] || []; return d.tasks.length > 0 && d.tasks.every((_, i) => t[i]); }
+function weekCounts(w) {
+  if (w.days.length) {
+    let done = 0, total = 0;
+    for (const d of w.days) { total += d.tasks.length; done += (P().tasks[d.id] || []).filter(Boolean).length; }
+    return { done, total };
+  }
+  const t = P().weekTasks[w.n] || [];
+  return { done: t.filter(Boolean).length, total: w.tasks.length };
+}
+
+/* The steps of a level, in the order they're meant to be played. */
+function stepsOf(d) {
+  const s = [{ key: "learn", label: "Learn" }];
+  if (d.files.length) s.push({ key: "practice", label: "Practice" });
+  if (d.quiz?.length) s.push({ key: "quiz", label: "Quiz" });
+  if (d.retest?.length) s.push({ key: "boss", label: "Boss" });
+  s.push({ key: "missions", label: "Missions" });
+  return s;
+}
+function stepDone(d, key) {
+  if (key === "learn") return !!P().lessons[d.id];
+  if (key === "practice") { const c = checkedLabs(d); return c.length ? c.every(f => labPassed(d, f)) : !!P().steps[d.id]?.practiceSeen; }
+  if (key === "quiz") return !!P().quiz[d.id];
+  if (key === "boss") return (P().retest[d.id]?.best || 0) >= 8;
+  if (key === "missions") return dayDone(d);
+  return false;
+}
+function stepSub(d, key) {
+  if (key === "practice") { const c = checkedLabs(d); return c.length ? `${c.filter(f => labPassed(d, f)).length}/${c.length}` : `${d.files.length}`; }
+  if (key === "quiz") { const q = P().quiz[d.id]; return q ? `${q.best}/${q.total}` : `${d.quiz.length} Q${d.quiz.length === 1 ? "" : "s"}`; }
+  if (key === "boss") { const r = P().retest[d.id]; return r ? `${r.best}/${r.total}` : "8/10 wins"; }
+  if (key === "missions") { const t = (P().tasks[d.id] || []).filter(Boolean).length; return `${t}/${d.tasks.length}`; }
+  return "";
+}
+const nextStep = d => (stepsOf(d).find(s => !stepDone(d, s.key)) || stepsOf(d).at(-1)).key;
+const stepIndex = (d, key) => stepsOf(d).findIndex(s => s.key === key) + 1;
+
+/* Stars: one for the lesson, one for every lab passing, one for a perfect quiz. */
+function stars(d) {
+  const q = P().quiz[d.id];
+  return [!!P().lessons[d.id], checkedLabs(d).length > 0 && stepDone(d, "practice"), !!(q && q.best === q.total)];
+}
+function xp() {
+  let x = 0;
+  for (const v of Object.values(P().tasks)) x += v.filter(Boolean).length * 10;
+  for (const v of Object.values(P().weekTasks)) x += v.filter(Boolean).length * 10;
+  for (const v of Object.values(P().quiz)) x += v.best * 5;
+  for (const v of Object.values(P().retest)) x += v.best >= 8 ? 50 : 0;
+  for (const v of Object.values(P().checks)) x += v.passed === v.total ? 20 : 0;
+  x += Object.values(P().lessons).filter(Boolean).length * 10;
+  return x;
+}
+function streak() {
+  const set = new Set(P().activity); let n = 0; const d = new Date();
+  if (!set.has(todayISO())) d.setDate(d.getDate() - 1);
+  while (true) {
+    const iso = new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+    if (!set.has(iso)) break; n++; d.setDate(d.getDate() - 1);
+  }
+  return n;
+}
+
+/* Missions completed by what you do in Bench: passing labs, writing notes, beating the boss. */
+function syncAutoTasks(d) {
+  const t = P().tasks[d.id] ||= [];
+  const before = dayDone(d);
+  let changed = false;
+  const tick = i => { if (i != null && i < d.tasks.length && !t[i]) { t[i] = true; changed = true; } };
+  const byTask = {};
+  for (const f of d.files) for (const i of f.tasks || []) (byTask[i] ||= []).push(f);
+  for (const [i, files] of Object.entries(byTask)) if (files.every(f => labPassed(d, f))) tick(+i);
+  if ((P().notes[d.id] || 0) >= 40) tick(d.notes_task);
+  if ((P().retest[d.id]?.best || 0) >= 8) tick(d.retest_task);
+  if (changed) { saveProgress(); if (!before && dayDone(d)) celebrate(d); }
+  return changed;
+}
+function autoSource(d, i) {
+  if (d.files.some(f => (f.tasks || []).includes(i))) return "by your lab";
+  if (d.notes_task === i) return "by your notes";
+  if (d.retest_task === i) return "by the boss level";
+  return "";
+}
+function celebrate(d) {
+  const n = stars(d).filter(Boolean).length;
+  toast(`Level cleared: ${d.title}  ${"★".repeat(n)}${"☆".repeat(3 - n)}`);
+}
+
+/* ---------- Header: arena + level path ---------- */
+function currentWeekIndex() {
+  const t = todayISO(), days = allDays();
+  const exact = days.find(d => d.date === t);
+  if (exact) return weekOfDay(exact.id);
+  if (days.length && t < days[0].date) return 0;
+  return Math.max(0, weekOfDay((days.filter(d => d.date <= t).pop() || days[0]).id));
+}
+function levelNode(d, n) {
+  const st = stars(d), t = todayISO();
+  const cls = ["node", dayDone(d) ? "cleared" : "", S.day?.id === d.id ? "active" : "", d.date === t ? "today" : ""].join(" ");
+  return `<button class="${cls}" data-day="${d.id}" title="Level ${n}: ${esc(d.title)} · ${d.weekday} ${d.date.slice(5).replace("-", "/")} · ${st.filter(Boolean).length}/3 stars">
+    <span class="dot">${dayDone(d) ? "✓" : n}</span><span class="stars">${st.map(s => `<span class="${s ? "on" : ""}">★</span>`).join("")}</span></button>`;
+}
+function renderHeader() {
+  const w = S.weeks[S.week];
+  $("#arenaKicker").textContent = `Arena ${w.n} · ${w.phase}`;
+  $("#arenaName").textContent = w.title;
+  $("#path").innerHTML = w.days.map((d, i) => (i ? `<span class="link ${dayDone(w.days[i - 1]) ? "done" : ""}"></span>` : "") + levelNode(d, i + 1)).join("");
+  $("#path").onclick = e => { const b = e.target.closest(".node"); if (b) selectDay(b.dataset.day); };
+  let done = 0, total = 0;
+  for (const wk of S.weeks) { const c = weekCounts(wk); done += c.done; total += c.total; }
+  const s = streak();
+  $("#stats").innerHTML = `<div><b>${s} day${s === 1 ? "" : "s"}</b>streak</div><div><b>${xp()}</b>XP</div>
+    <div><b>${total ? Math.round(100 * done / total) : 0}%</b>of the plan</div>`;
+  $("#path .active")?.scrollIntoView({ block: "nearest", inline: "center" });
+}
+
+/* ---------- Step bar ---------- */
+function renderStepbar() {
+  const d = S.day, w = S.weeks[S.week], n = w.days.indexOf(d) + 1, steps = stepsOf(d), next = nextStep(d);
+  const hasNotes = (P().notes[d.id] || 0) > 0;
+  $("#stepbar").innerHTML = `
+    <div class="level-title"><small>Level ${n} of ${w.days.length} · ${d.weekday} ${d.date.slice(5).replace("-", "/")} · about ${d.minutes} min</small><h1>${esc(d.title)}</h1></div>
+    <nav class="steps" aria-label="Steps of this level">${steps.map((s, i) => {
+      const done = stepDone(d, s.key), sub = stepSub(d, s.key);
+      return (i ? `<span class="step-gap ${stepDone(d, steps[i - 1].key) ? "done" : ""}"></span>` : "") +
+        `<button class="step ${done ? "done" : ""} ${S.step === s.key ? "current" : ""} ${next === s.key ? "next" : ""}" data-step="${s.key}" aria-current="${S.step === s.key ? "step" : "false"}">
+          <span class="num">${done ? "✓" : i + 1}</span>${s.label}${sub ? `<span class="sub">${sub}</span>` : ""}</button>`;
+    }).join("")}</nav>
+    <button class="icon-btn" id="notesBtn" title="Your notes for this level, saved to notes.md">${ICON_NOTE}Notes${hasNotes ? `<span class="dotmark"></span>` : ""}</button>`;
+  $("#stepbar .steps").onclick = e => { const b = e.target.closest(".step"); if (b) goStep(b.dataset.step); };
+  $("#notesBtn").onclick = openNotes;
+}
+
+/* ---------- Navigation ---------- */
+function selectDay(id, step) {
+  S.day = findDay(id); S.week = weekOfDay(id); S.quizState = {};
+  syncAutoTasks(S.day);
+  S.step = step || P().steps[id]?.last || nextStep(S.day);
+  if (!stepsOf(S.day).some(s => s.key === S.step)) S.step = "learn";
+  S.ex = Math.min(P().steps[id]?.ex || 0, Math.max(0, S.day.files.length - 1));
+  P().last.day = id; saveProgress();
+  closeOverlay(); renderAll();
+}
+function goStep(key) {
+  S.step = key; S.quizState = {};
+  const st = P().steps[S.day.id] ||= {};
+  st.last = key;
+  if (key === "practice") st.practiceSeen = true;
+  saveProgress(); renderAll();
+  $("#guide").scrollTop = 0;
+}
+function goNext() {
+  const steps = stepsOf(S.day), i = steps.findIndex(s => s.key === S.step);
+  if (i < steps.length - 1) return goStep(steps[i + 1].key);
+  const days = S.weeks[S.week].days, j = days.indexOf(S.day);
+  if (j < days.length - 1) return selectDay(days[j + 1].id, "learn");
+  openMap();
+}
+function nextLabel() {
+  const steps = stepsOf(S.day), i = steps.findIndex(s => s.key === S.step);
+  if (i < steps.length - 1) return `Next: ${steps[i + 1].label} →`;
+  const days = S.weeks[S.week].days, j = days.indexOf(S.day);
+  return j < days.length - 1 ? `Next level: ${days[j + 1].title} →` : "Open the map →";
+}
+function renderAll() { renderHeader(); renderStepbar(); renderGuide(); syncBench(); }
+
+/* ---------- Markdown ---------- */
+function inline(s) {
+  s = esc(s); const codes = [];
+  s = s.replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return `\u0000${codes.length - 1}\u0000`; });
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codes[i]}</code>`);
+}
+function md(src, opts = {}) {
+  // Interactive blocks first:  :::type extra text \n body \n:::
+  const out = [];
+  const re = /^:::(\w+)[ \t]*(.*)\n([\s\S]*?)^:::[ \t]*$/gm;
+  let last = 0, m;
+  src = src.trim();
+  while ((m = re.exec(src))) {
+    out.push(mdPlain(src.slice(last, m.index), opts));
+    out.push(richBlock(m[1], m[2].trim(), m[3].replace(/\n$/, ""), opts));
+    last = re.lastIndex;
+  }
+  out.push(mdPlain(src.slice(last), opts));
+  return out.join("");
+}
+function mdPlain(src, opts = {}) {
+  const parts = src.split(/```(\w*)\n([\s\S]*?)```/g);
+  let html = "";
+  for (let i = 0; i < parts.length; i += 3) {
+    html += blocks(parts[i]);
+    if (i + 2 < parts.length) {
+      const lang = parts[i + 1], code = parts[i + 2].replace(/\n$/, "");
+      const py = lang === "python";
+      html += `<div class="snippet"><pre><code>${esc(code)}</code></pre><div class="snippet-bar">
+        <button data-copy>Copy</button>${py ? `<button data-runinline title="Run it right here and see the output below">Run ▶</button>` : ""}${py && opts.tryable !== false ? `<button data-try title="Put it in the scratchpad on the right and run it">Try it in the editor →</button>` : ""}</div>
+        <textarea hidden>${esc(code)}</textarea><div class="snippet-out" hidden></div></div>`;
+    }
+  }
+  return html;
+}
+let _blkId = 0;
+function richBlock(type, arg, body, opts) {
+  const id = "b" + (++_blkId);
+  const box = (cls, tag, inner) => `<div class="blk ${cls}" id="${id}"><div class="blk-tag">${tag}</div>${inner}</div>`;
+  switch (type) {
+    case "hook": return box("hook", arg || "Real situation", md(body, opts));
+    case "analogy": return box("analogy", arg || "Think of it like this", md(body, opts));
+    case "key": return box("key", arg || "Remember this", md(body, opts));
+    case "mistake": return box("mistake", arg || "Common mistake", md(body, opts));
+    case "reveal": return `<details class="blk reveal" id="${id}"><summary>${inline(arg || "Go deeper")}</summary>${md(body, opts)}</details>`;
+    case "predict": {
+      const [q, ans = ""] = body.split(/^---[ \t]*$/m);
+      return box("predict", "Predict first", `<p class="blk-q">${inline(arg)}</p>${md(q, opts)}
+        <textarea class="guess" placeholder="Your guess, even a rough one. Guessing first makes the answer stick."></textarea>
+        <button class="btn small" data-reveal disabled>Reveal the answer</button>
+        <div class="answer" hidden>${md(ans, opts)}</div>`);
+    }
+    case "check": {
+      const lines = body.split("\n"); let q = arg, exp = [], opt = [];
+      for (const l of lines) {
+        if (/^\?\s/.test(l)) q = l.slice(2);
+        else if (/^[-*]\s/.test(l)) opt.push({ t: l.slice(2), ok: l[0] === "*" });
+        else if (/^>\s?/.test(l)) exp.push(l.replace(/^>\s?/, ""));
+      }
+      return box("check", "Quick check", `<p class="blk-q">${inline(q)}</p>${shuffle(opt.map((o, i) => [o, i])).map(([o]) =>
+        `<button class="chk-opt" data-ok="${o.ok ? 1 : 0}">${inline(o.t)}</button>`).join("")}
+        <div class="explain" hidden>${inline(exp.join(" "))}</div>`);
+    }
+    case "explain": return box("explain", "Explain it in your own words", `<p class="blk-q">${inline(arg || body)}</p>
+        <textarea class="feyn" placeholder="Write it as if you were teaching a friend. 2-4 sentences."></textarea>
+        <button class="btn small" data-feedback>Get feedback from the tutor</button><div class="fb" hidden></div>`);
+    case "cards": {
+      const cards = body.split("\n").filter(l => l.includes("::")).map(l => l.split("::").map(x => x.trim()));
+      return box("cards", arg || "Flashcards: recall, then flip", `<div class="flash">${cards.map(([q, a]) =>
+        `<button class="fcard"><span class="f-q">${inline(q)}</span><span class="f-a">${inline(a)}</span></button>`).join("")}</div>
+        <p class="hint">Say the answer in your head first, then click to flip.</p>`);
+    }
+    default: return md(body, opts);
+  }
+}
+/* One click handler for every interactive block and snippet, on any page. */
+async function richClick(e) {
+  const t = e.target;
+  const snip = t.closest(".snippet");
+  if (snip) {
+    const code = snip.querySelector("textarea").value;
+    if (t.matches("[data-copy]")) { await navigator.clipboard.writeText(code).catch(() => {}); toast("Copied"); }
+    if (t.matches("[data-try]")) tryInScratch(code);
+    if (t.matches("[data-runinline]")) {
+      const out = snip.querySelector(".snippet-out"); out.hidden = false; out.textContent = "Running…"; t.disabled = true;
+      try {
+        const r = await api("/api/run", { day: S.day.folder, name: null, code });
+        out.innerHTML = `<pre>${esc((r.stdout || "") + (r.stderr ? "\n" + r.stderr : "")) || "(no output)"}</pre>` +
+          (r.images || []).map(b => `<img src="data:image/png;base64,${b}" alt="plot">`).join("");
+      } catch (err) { out.textContent = err.message; }
+      t.disabled = false;
+    }
+    return;
+  }
+  const blk = t.closest(".blk");
+  if (t.matches("[data-reveal]")) { blk.querySelector(".answer").hidden = false; t.remove(); return; }
+  if (t.closest(".chk-opt") && !blk.dataset.done) {
+    const b = t.closest(".chk-opt"); blk.dataset.done = 1;
+    blk.querySelectorAll(".chk-opt").forEach(o => { o.disabled = true; if (o.dataset.ok === "1") o.classList.add("right"); });
+    if (b.dataset.ok !== "1") b.classList.add("wrong");
+    const ex = blk.querySelector(".explain"); ex.hidden = false;
+    ex.insertAdjacentHTML("afterbegin", b.dataset.ok === "1" ? "<b>Right.</b> " : "<b>Not quite.</b> ");
+    return;
+  }
+  if (t.closest(".fcard")) { t.closest(".fcard").classList.toggle("flipped"); return; }
+  if (t.matches("[data-feedback]")) {
+    const txt = blk.querySelector(".feyn").value.trim(), fb = blk.querySelector(".fb");
+    if (txt.length < 15) return toast("Write a couple of sentences first");
+    fb.hidden = false; fb.textContent = "Reading your explanation…"; t.disabled = true;
+    try {
+      const r = await api("/api/ask", { mode: "feedback", context: tutorContext(),
+        messages: [{ role: "user", content: `Question: ${blk.querySelector(".blk-q").innerText}\n\nMy explanation: ${txt}` }] });
+      fb.innerHTML = md(r.text, { tryable: false });
+    } catch (err) { fb.innerHTML = `<span class="err">${esc(err.message)}</span> ${settingsLink()}`; }
+    t.disabled = false; return;
+  }
+  if (t.matches("[data-asktutor]")) { openTutor(t.dataset.asktutor, true); return; }
+  if (t.matches("[data-settings]")) { openSettings(); return; }
+}
+function richInput(e) {
+  if (e.target.matches(".guess")) e.target.closest(".blk").querySelector("[data-reveal]")?.toggleAttribute("disabled", e.target.value.trim().length < 2);
+}
+function tutorContext() {
+  return { level: S.day ? `${S.day.id} · ${S.day.title || ""}` : "", step: S.step,
+    page: document.getElementById("guide")?.innerText || "", file: S.file || "", code: S.editor ? S.editor.getValue() : "" };
+}
+const settingsLink = () => `<button class="linkish" data-settings>Open AI settings</button>`;
+function blocks(text) {
+  const out = []; let list = null, para = [];
+  const flushP = () => { if (para.length) { out.push(`<p>${inline(para.join(" "))}</p>`); para = []; } };
+  const flushL = () => { if (list) { out.push(`<${list.tag}>${list.items.map(i => `<li>${inline(i)}</li>`).join("")}</${list.tag}>`); list = null; } };
+  for (const raw of text.split("\n")) {
+    const line = raw.trimEnd();
+    let m;
+    if (!line.trim()) { flushP(); flushL(); continue; }
+    if ((m = line.match(/^(#{2,4})\s+(.*)/))) { flushP(); flushL(); out.push(`<h${m[1].length + 1}>${inline(m[2])}</h${m[1].length + 1}>`); continue; }
+    if ((m = line.match(/^\s*[-*]\s+(.*)/))) { flushP(); if (!list || list.tag !== "ul") { flushL(); list = { tag: "ul", items: [] }; } list.items.push(m[1]); continue; }
+    if ((m = line.match(/^\s*\d+\.\s+(.*)/))) { flushP(); if (!list || list.tag !== "ol") { flushL(); list = { tag: "ol", items: [] }; } list.items.push(m[1]); continue; }
+    if (list) { list.items[list.items.length - 1] += " " + line.trim(); continue; }
+    para.push(line.trim());
+  }
+  flushP(); flushL(); return out.join("");
+}
+
+/* ---------- Guide (left) ---------- */
+function renderGuide() {
+  $("#guide").onclick = null; $("#guide").onchange = null; $("#guide").oninput = null;
+  ({ learn: guideLearn, practice: guidePractice, quiz: () => guideQuiz("quiz"), boss: () => guideQuiz("boss"), missions: guideMissions })[S.step]();
+}
+function nextBar(hint, label, primary = true) {
+  return `<div class="next-bar"><button class="btn ${primary ? "go" : ""}" id="nextBtn">${label}</button>${hint ? `<span class="hint">${hint}</span>` : ""}</div>`;
+}
+
+function lessonSections(src) {
+  const secs = []; let cur = { title: "", body: [] }, inCode = false;
+  for (const l of src.trim().split("\n")) {
+    if (l.startsWith("```")) inCode = !inCode;
+    if (!inCode && /^## /.test(l)) { if (cur.title || cur.body.join("").trim()) secs.push(cur); cur = { title: l.slice(3).trim(), body: [] }; continue; }
+    cur.body.push(l);
+  }
+  secs.push(cur);
+  return secs.map(s => ({ title: s.title, body: s.body.join("\n") }));
+}
+const attr = s => esc(s).replace(/'/g, "&#39;");
+
+function guideLearn() {
+  const d = S.day, read = !!P().lessons[d.id], st = (P().steps[d.id] ||= {});
+  const secs = lessonSections(d.lesson), N = secs.length;
+  const showAll = read || st.learnAll;
+  const upto = showAll ? N : Math.min(Math.max(st.learnUpto || 1, 1), N);
+  const res = d.resources.length ? `<div class="card"><h3>Go deeper</h3><ul>${d.resources.map(r => `<li><a href="${r.url}" target="_blank" rel="noopener">${esc(r.label)}</a></li>`).join("")}</ul></div>` : "";
+  const sections = secs.slice(0, upto).map((s, i) => `<section class="lsec ${i === upto - 1 && !showAll ? "fresh" : ""}" id="sec${i}">
+      <div class="lsec-n">Part ${i + 1} of ${N}</div>
+      ${s.title ? `<h3>${inline(s.title)}</h3>` : ""}${md(s.body)}
+      <div class="lsec-foot">
+        <button class="linkish" data-asktutor='${attr(`I didn't fully get "${s.title || d.title}". Explain it again more simply, with a different real-life example.`)}'>Still unclear? Ask the tutor</button>
+        ${i === upto - 1 && upto < N ? `<button class="btn go" data-continue>Continue: ${inline(secs[i + 1].title || "next part")} →</button>` : ""}
+      </div></section>`).join("");
+  $("#guide").innerHTML = `<div class="guide-inner prose">
+    <p class="kicker">Step 1 · Learn</p>
+    <p class="why">${inline(d.why)}</p>
+    <div class="goal"><b>By the end of this level:</b> ${inline(d.done_when)}</div>
+    <div class="lprog"><div class="lprog-bar"><span style="width:${Math.round(100 * upto / N)}%"></span></div>
+      <span>${upto} / ${N} parts</span>${upto < N ? `<button class="linkish" data-showall>Show everything</button>` : ""}</div>
+    ${sections}
+    ${upto === N ? `${res}${nextBar(read ? "" : "Tip: “Run ▶” on any example shows its output right under it.",
+      read ? nextLabel() : "I've read the lesson · Practice →")}` : ""}
+  </div>`;
+  $("#guide").onclick = e => {
+    if (e.target.matches("[data-continue]")) {
+      st.learnUpto = upto + 1; saveProgress(); guideLearn();
+      $(`#sec${upto}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); return;
+    }
+    if (e.target.matches("[data-showall]")) { st.learnAll = true; saveProgress(); guideLearn(); return; }
+    richClick(e);
+  };
+  $("#guide").oninput = richInput;
+  $("#nextBtn")?.addEventListener("click", () => {
+    if (!read) { P().lessons[d.id] = true; saveProgress(); logActivity(); toast("Lesson complete ★"); }
+    goNext();
+  });
+}
+
+function splitBrief(body) {
+  // Pull the "## Real example" (or "## Worked example") section out so it can go first.
+  const secs = lessonSections(body || "");
+  const i = secs.findIndex(x => /^(Real|Worked) example/i.test(x.title));
+  if (i < 0) return { example: "", rest: body };
+  const rest = secs.filter((_, j) => j !== i).map(x => (x.title ? `## ${x.title}\n` : "") + x.body).join("\n\n");
+  return { example: secs[i].body.trim(), rest: rest.trim() };
+}
+
+function guidePractice() {
+  const d = S.day, f = d.files[S.ex];
+  const dots = d.files.map((x, i) => `<button class="ex-dot ${i === S.ex ? "current" : ""} ${labPassed(d, x) ? "passed" : ""}" data-ex="${i}" title="${esc(labTitle(x))}">${labPassed(d, x) && i !== S.ex ? "✓" : i + 1}</button>`).join("");
+  const lines = (f.brief || "").split("\n");
+  const hasTopic = lines[0]?.startsWith("**Topic:**");
+  const topic = hasTopic ? `<div class="topic">${blocks(lines[0])}</div>` : "";
+  const { example, rest } = splitBrief(hasTopic ? lines.slice(1).join("\n") : (f.brief || ""));
+  const last = S.ex === d.files.length - 1, passed = labPassed(d, f);
+  const exampleHtml = example
+    ? `<div class="blk example"><div class="blk-tag">1 · See it work first: a real example</div>${md(example, { tryable: false })}</div>`
+    : `<div class="blk example"><div class="blk-tag">1 · See it work first</div>
+        <p>Want to see this technique solve a similar real problem before you start?</p>
+        <button class="btn small" data-aiexample>Show me a worked example</button><div class="ai-ex" hidden></div></div>`;
+  $("#guide").innerHTML = `<div class="guide-inner prose brief">
+    <p class="kicker">Step 2 · Practice</p>
+    <div class="ex-nav"><div class="ex-dots">${dots}</div><span class="ex-count">Exercise ${S.ex + 1} of ${d.files.length}</span></div>
+    <h2 class="title">${esc(labTitle(f))}</h2>
+    ${topic}${exampleHtml}
+    <div class="your-turn"><div class="blk-tag">2 · Now your turn</div>${rest ? md(rest, { tryable: false }) : `<p>Follow the comments in the editor.</p>`}</div>
+    <div class="card">${f.has_check
+      ? (passed ? "<strong>✓ All checks pass.</strong> On to the next one."
+        : f.name.endsWith(".py") ? "Fill in each <code>...</code> in the editor, <strong>Run</strong> to see it work, then <strong>Check</strong> to see what's right and what's missing."
+        : "Replace each TODO in the editor, then press <strong>Check</strong>.")
+      : "No automatic checks here: follow the steps, then move on."}
+      <button class="linkish" data-asktutor='${attr("Give me a hint for the next step of this exercise, without the full solution.")}'>Stuck? Get a hint</button></div>
+    ${nextBar(last ? (stepDone(d, "practice") ? "" : "You can move on and come back to unfinished labs any time.") : "",
+      last ? nextLabel() : `Next exercise: ${esc(labTitle(d.files[S.ex + 1]))} →`, passed || !f.has_check)}
+  </div>`;
+  $(".ex-dots").onclick = e => { const b = e.target.closest(".ex-dot"); if (b) selectExercise(+b.dataset.ex); };
+  $("#guide").onclick = async e => {
+    if (e.target.matches("[data-aiexample]")) {
+      const box = $(".ai-ex"), btn = e.target; box.hidden = false; box.textContent = "Writing an example…"; btn.disabled = true;
+      try {
+        const r = await api("/api/ask", { mode: "example", context: tutorContext(),
+          messages: [{ role: "user", content: `Show me a worked example for: ${labTitle(f)}` }] });
+        box.innerHTML = md(r.text, { tryable: false }); btn.remove();
+      } catch (err) { box.innerHTML = `<span class="err">${esc(err.message)}</span> ${settingsLink()}`; btn.disabled = false; }
+      return;
+    }
+    richClick(e);
+  };
+  $("#guide").oninput = richInput;
+  $("#nextBtn").onclick = () => last ? goNext() : selectExercise(S.ex + 1);
+}
+function selectExercise(i) {
+  S.ex = i; (P().steps[S.day.id] ||= {}).ex = i; saveProgress();
+  guidePractice(); syncBench(); $("#guide").scrollTop = 0;
+}
+
+function guideQuiz(kind) {
+  const d = S.day, boss = kind === "boss";
+  const qs = boss ? d.retest : d.quiz, store = boss ? P().retest : P().quiz;
+  const st = S.quizState[kind] ||= { answers: {}, submitted: false, order: qs.map(q => shuffle(q.options.map((_, j) => j))) };
+  const prev = store[d.id];
+  let head = `<p class="kicker">Step ${stepIndex(d, kind)} · ${boss ? "Boss level" : "Quiz"}</p>`;
+  head += boss ? `<h2 class="title">Arena ${S.weeks[S.week].n} boss</h2><p class="why">Ten new questions on the whole week. Score 8 or more to win the arena.</p>`
+               : `<p class="why">Answer from memory first. The editor on the right is there if you want to verify an idea.</p>`;
+  if (st.submitted) {
+    const score = qs.filter((q, i) => st.answers[i] === q.answer).length;
+    const pass = !boss || score >= 8;
+    head += `<div class="score ${pass ? "pass" : "fail"}"><strong>${score}/${qs.length}.</strong> ${boss
+      ? (pass ? "Boss defeated. The next phase is open." : "Not yet. Redo the topics you missed, then try again.")
+      : score === qs.length ? "Perfect: that's a star ★" : "Read the explanations for the ones you missed."}
+      <button class="btn" id="retake" style="margin-left:8px">Retake</button></div>`;
+  } else if (prev) head += `<p class="empty">Best so far: ${prev.best}/${prev.total}</p>`;
+  $("#guide").innerHTML = `<div class="guide-inner">${head}${qs.map((q, i) => {
+    const [first, ...rest] = q.q.split("\n");
+    const qtext = rest.length ? `${inline(first)}<pre>${esc(rest.join("\n"))}</pre>` : inline(q.q);
+    return `<div class="q"><div class="q-text">${i + 1}. ${qtext}</div>${st.order[i].map(j => {
+      const o = q.options[j]; let cls = "";
+      if (st.submitted) cls = j === q.answer ? "right" : st.answers[i] === j ? "wrong" : "";
+      return `<label class="opt ${cls}"><input type="radio" name="q${i}" value="${j}" ${st.answers[i] === j ? "checked" : ""} ${st.submitted ? "disabled" : ""}><span>${inline(o)}</span></label>`;
+    }).join("")}${st.submitted ? `<div class="explain">${inline(q.explain)}</div>` : ""}</div>`;
+  }).join("")}
+  ${st.submitted ? nextBar("", nextLabel()) : `<button class="btn primary" id="submitQuiz">Check answers</button>`}</div>`;
+  $("#guide").onchange = e => { if (e.target.name) st.answers[+e.target.name.slice(1)] = +e.target.value; };
+  $("#submitQuiz")?.addEventListener("click", () => {
+    if (Object.keys(st.answers).length < qs.length) return toast(`Answer all ${qs.length} questions first`);
+    st.submitted = true;
+    const score = qs.filter((q, i) => st.answers[i] === q.answer).length;
+    const rec = store[d.id] ||= { best: 0, total: qs.length, attempts: 0 };
+    rec.best = Math.max(rec.best, score); rec.attempts++; rec.last = score;
+    saveProgress(); logActivity(); syncAutoTasks(d);
+    renderHeader(); renderStepbar(); renderGuide();
+    $("#guide").scrollTop = 0;
+  });
+  $("#retake")?.addEventListener("click", () => { delete S.quizState[kind]; renderGuide(); });
+  $("#nextBtn")?.addEventListener("click", goNext);
+}
+
+function guideMissions() {
+  const d = S.day, t = P().tasks[d.id] ||= [];
+  const external = d.tasks.some(x => /\]\(https?:/.test(x));
+  const cleared = dayDone(d), st = stars(d);
+  $("#guide").innerHTML = `<div class="guide-inner">
+    <p class="kicker">Step ${stepsOf(d).length} · Missions</p>
+    ${cleared ? `<div class="cleared-banner"><span class="big">${st.map(s => s ? "★" : "☆").join("")}</span>
+      <div><strong>Level cleared.</strong><br><span class="empty">Stars: lesson read · every lab passing · perfect quiz.</span></div></div>` : ""}
+    <p class="why">Everything that clears this level. Labs, notes and the boss tick their missions for you; tick the rest yourself.</p>
+    ${external ? `<p class="task-legend">Links marked ↗ open the page where you do that mission (new tab).</p>` : ""}
+    <div id="taskList">${d.tasks.map((task, i) => {
+      const src = autoSource(d, i);
+      return `<label class="task ${t[i] ? "checked" : ""}"><input type="checkbox" data-i="${i}" ${t[i] ? "checked" : ""}><span>${inline(task)}${src && t[i] ? `<span class="auto">✓ ${src}</span>` : ""}</span></label>`;
+    }).join("")}</div>
+    <div class="card"><strong>Done when:</strong> ${inline(d.done_when)}</div>
+    ${nextBar(cleared ? "" : "Unfinished missions can wait: come back any time.", nextLabel(), cleared)}
+  </div>`;
+  $("#taskList").onchange = e => {
+    const i = +e.target.dataset.i, before = dayDone(d); t[i] = e.target.checked;
+    saveProgress(); logActivity();
+    if (!before && dayDone(d)) celebrate(d);
+    renderHeader(); renderStepbar(); guideMissions();
+  };
+  $("#nextBtn").onclick = goNext;
+}
+
+/* ---------- Workbench (right) ---------- */
+function benchTarget() {
+  if (S.step === "practice" && S.day.files.length) return { name: S.day.files[S.ex].name, lab: S.day.files[S.ex] };
+  return { name: SCRATCH, lab: null };
+}
+function renderBenchShell() {
+  $("#bench").innerHTML = `
+    <div class="bench-head"><span class="chip" id="benchChip"></span><span class="label" id="benchLabel"></span>
+      <button id="collapseBtn" title="Hide the editor to give the guide more room">Hide ›</button></div>
+    <div class="editor-wrap" id="editorWrap"></div>
+    <div class="predict" id="predictBox"><label for="predict">Your prediction <span>What will it print? Each line is compared after Run</span></label>
+      <textarea id="predict" placeholder="Expected output, error, or timing…"></textarea></div>
+    <div class="actions">
+      <button class="btn primary" id="runBtn">Run</button>
+      <button class="btn" id="checkBtn" title="Run the automatic checks (Ctrl+Shift+Enter)">Check</button>
+      <button class="btn" id="resetBtn">Reset</button>
+      <label id="pfWrap"><input type="checkbox" id="pf">Predict first</label>
+      <span class="save-state" id="saveState"></span>
+      <span class="hint" id="benchHint"></span>
+    </div>
+    <div class="output" id="output"></div>`;
+  $("#runBtn").onclick = runCurrent;
+  $("#checkBtn").onclick = checkCurrent;
+  $("#resetBtn").onclick = resetFile;
+  $("#collapseBtn").onclick = () => setBenchCollapsed(true);
+  $("#benchRail").onclick = () => setBenchCollapsed(false);
+  $("#pf").onchange = e => { P().settings.predictFirst = e.target.checked; saveProgress(); updateRunState(); };
+  $("#predict").oninput = e => { P().predictions[`${S.day.folder}/${S.file}`] = e.target.value; saveProgress(); updateRunState(); };
+  mountEditor();
+}
+function setBenchCollapsed(v) {
+  S.benchCollapsed = v; P().settings.benchCollapsed = v; saveProgress();
+  $("#main").classList.toggle("bench-collapsed", v);
+  if (!v) setTimeout(() => S.editor?.refresh(), 0);
+}
+async function syncBench() {
+  const { name, lab } = benchTarget();
+  const isPyLab = !!lab && name.endsWith(".py");
+  $("#benchChip").textContent = lab ? `Exercise ${S.ex + 1}` : "Scratchpad";
+  $("#benchLabel").innerHTML = lab ? `${esc(labTitle(lab))}<small>follow the comments</small>` : `Test any idea here<small>not graded</small>`;
+  $("#benchHint").textContent = lab ? (name.endsWith(".py") ? "Ctrl+Enter runs · Ctrl+Shift+Enter checks" : "Check reads this file") : "Ctrl+Enter runs";
+  $("#pfWrap").hidden = !isPyLab;
+  $("#pf").checked = !!P().settings.predictFirst;
+  $("#predictBox").hidden = !isPyLab;
+  $("#resetBtn").textContent = lab ? "Reset to starter" : "Clear";
+  if (S.file !== name || S.fileDay !== S.day.folder) {
+    await openFile(name, lab);
+    $("#output").innerHTML = `<div class="empty">${lab
+      ? (name.endsWith(".py") ? "Write a prediction, press <b>Run</b>, then <b>Check</b> to see what's right and what's missing." : "Edit the file, then press <b>Check</b>.")
+      : "Scratchpad output appears here."}</div>`;
+  }
+  updateRunState();
+}
+function mountEditor() {
+  const wrap = $("#editorWrap");
+  if (window.CodeMirror) {
+    S.editor = CodeMirror(wrap, { lineNumbers: true, lineWrapping: true, indentUnit: 4, tabSize: 4, matchBrackets: true,
+      extraKeys: { "Ctrl-Enter": runCurrent, "Cmd-Enter": runCurrent, "Shift-Ctrl-Enter": checkCurrent, "Shift-Cmd-Enter": checkCurrent,
+        "Ctrl-S": () => saveFile(true), "Cmd-S": () => saveFile(true),
+        Tab: cm => cm.somethingSelected() ? cm.indentSelection("add") : cm.replaceSelection("    ") } });
+    S.editor.on("change", (_, ch) => { if (ch.origin !== "setValue") scheduleSave(); });
+  } else {
+    const ta = document.createElement("textarea"); ta.className = "fallback-editor"; ta.spellcheck = false; wrap.appendChild(ta);
+    S.editor = { getValue: () => ta.value, setValue: v => (ta.value = v), setOption() {}, refresh() {}, focus: () => ta.focus() };
+    ta.oninput = scheduleSave;
+    ta.onkeydown = e => {
+      if (e.key === "Tab") { e.preventDefault(); const s = ta.selectionStart; ta.setRangeText("    ", s, ta.selectionEnd, "end"); }
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") e.shiftKey ? checkCurrent() : runCurrent();
+    };
+  }
+}
+const modeFor = n => n.endsWith(".py") ? "python" : /\.ya?ml$/.test(n) ? "yaml" : n.endsWith(".json") ? { name: "javascript", json: true } : n.endsWith(".md") ? "markdown" : null;
+async function openFile(name, lab) {
+  await flushSave();
+  S.file = name; S.fileDay = S.day.folder;
+  const r = await api(`/api/file?day=${S.day.folder}&name=${encodeURIComponent(name)}`);
+  const content = r.content.trim() ? r.content : lab ? lab.starter : SCRATCH_STARTER;
+  S.editor.setOption("mode", modeFor(name));
+  S.editor.setValue(content);
+  if (!r.content.trim() && lab) await api("/api/file", { day: S.day.folder, name, content });
+  setTimeout(() => S.editor.refresh(), 0);
+  $("#predict").value = P().predictions[`${S.day.folder}/${name}`] || "";
+  $("#saveState").textContent = "";
+  $("#saveState").title = `Saved to ${S.day.folder}/${name} in your lab folder`;
+}
+function updateRunState() {
+  const { lab } = benchTarget();
+  const isPy = S.file?.endsWith(".py");
+  const needPred = !!lab && isPy && P().settings.predictFirst && !$("#predict").value.trim();
+  const btn = $("#runBtn");
+  btn.disabled = !isPy || needPred;
+  btn.title = !isPy ? "This isn't a Python file: use Check" : needPred ? "Write a prediction first (or untick 'Predict first')" : "Run (Ctrl+Enter)";
+  $("#checkBtn").hidden = !lab?.has_check;
+}
+let saveTimer, savePending = false;
+function scheduleSave() { savePending = true; $("#saveState").textContent = "Unsaved"; clearTimeout(saveTimer); saveTimer = setTimeout(saveFile, 700); }
+async function flushSave() { if (savePending) await saveFile(); }
+async function saveFile(announce) {
+  clearTimeout(saveTimer); savePending = false;
+  if (!S.file) return;
+  try { await api("/api/file", { day: S.fileDay, name: S.file, content: S.editor.getValue() }); $("#saveState").textContent = "Saved"; if (announce === true) toast("Saved"); }
+  catch (e) { $("#saveState").textContent = "Save failed: " + e.message; }
+}
+async function resetFile() {
+  const { lab } = benchTarget();
+  if (lab) {
+    if (!confirm("Replace this exercise with the starter? Your current code in it will be lost.")) return;
+    S.editor.setValue(lab.starter); await saveFile(); toast("Reset to starter");
+  } else { S.editor.setValue(SCRATCH_STARTER); await saveFile(); }
+}
+async function tryInScratch(code) {
+  if (S.benchCollapsed) setBenchCollapsed(false);
+  S.editor.setValue(code + "\n"); await saveFile();
+  runCurrent();
+}
+async function runCurrent() {
+  const btn = $("#runBtn"); if (btn.disabled) { if (!S.file?.endsWith(".py")) return; return toast("Write your prediction first"); }
+  btn.disabled = true; btn.textContent = "Running…";
+  $("#output").innerHTML = `<div class="empty">Running…</div>`;
+  try {
+    const r = await api("/api/run", { day: S.day.folder, name: S.file, code: S.editor.getValue() });
+    savePending = false;
+    const pred = benchTarget().lab ? $("#predict").value.trim() : "";
+    $("#output").innerHTML = (pred ? compareHTML(pred, r) : "") + renderResult(r, !!pred);
+    $("#saveState").textContent = "Saved"; logActivity();
+  } catch (e) { $("#output").innerHTML = `<pre class="stderr">${esc(e.message)}\nIs the Bench server still running in your terminal?</pre>`; }
+  btn.textContent = "Run"; updateRunState();
+}
+function renderResult(r, compared) {
+  const status = r.timed_out ? `<span class="bad">Stopped (timeout)</span>` : r.returncode === 0 ? `<span class="ok">Finished</span>` : `<span class="bad">Exited with an error (code ${r.returncode})</span>`;
+  return `<div class="out-meta">${status}<span>${r.seconds}s</span></div>
+    ${r.stdout && !(compared && (r.stdout + r.stderr).trim().length <= 1200) ? `<pre class="stdout">${esc(r.stdout)}</pre>` : ""}
+    ${r.stderr ? `<pre class="stderr">${esc(r.stderr)}</pre>` : ""}
+    ${r.images.map(b => `<img alt="Plot from your script" src="data:image/png;base64,${b}">`).join("")}
+    ${!r.stdout && !r.stderr && !r.images.length ? `<div class="empty">No output. Add print() calls to see results.</div>` : ""}`;
+}
+/* Prediction vs output, line by line: whitespace-insensitive, so "[1,2]" matches "[1, 2]". */
+function compareHTML(pred, r) {
+  const norm = l => l.replace(/\s+/g, "");
+  const actual = r.stdout.trim().slice(0, 1200);
+  const want = pred.split("\n").filter(l => l.trim()), got = actual.split("\n").filter(l => l.trim());
+  let hits = 0;
+  const yours = want.map((l, i) => { const ok = got[i] !== undefined && norm(l) === norm(got[i]); hits += ok; return `<span class="match-line ${ok ? "hit" : "miss"}">${esc(l)}</span>`; }).join("");
+  const sum = got.length ? `<span class="match-sum">${hits}/${got.length} output line${got.length === 1 ? "" : "s"} predicted exactly</span>` : "";
+  return `<div class="compare"><div class="yours"><b>You predicted</b>${yours}${sum}</div>
+    <div class="actual"><b>Actual output</b>${esc(actual || (r.stderr ? "(error, see below)" : "(no output)"))}</div></div>`;
+}
+async function checkCurrent() {
+  const { lab } = benchTarget(); if (!lab?.has_check) return;
+  const d = S.day, btn = $("#checkBtn"); btn.disabled = true; btn.textContent = "Checking…";
+  $("#output").innerHTML = `<div class="empty">Checking…</div>`;
+  try {
+    const r = await api("/api/check", { day: d.folder, name: lab.name, code: S.editor.getValue() });
+    savePending = false;
+    const passed = r.results.filter(c => c.ok).length, total = r.results.length, all = passed === total;
+    const wasPassed = labPassed(d, lab);
+    P().checks[checkKey(d, lab.name)] = { passed, total, at: new Date().toISOString() };
+    saveProgress(); logActivity();
+    $("#output").innerHTML = `<div class="checks-head ${all ? "all" : "some"}"><b>${passed}/${total} checks passed</b>
+      <span>${all ? "Everything checked is correct." : "Fix the first ✗ and check again."}</span><span class="out-meta">${r.seconds}s</span></div>
+      <ul class="checks">${r.results.map(c => `<li class="${c.ok ? "pass" : "fail"}"><span class="icon">${c.ok ? "✓" : "✗"}</span>
+        <span>${inline(c.label)}${!c.ok && c.hint ? `<span class="hint">${inline(c.hint)}</span>` : ""}${!c.ok && c.detail ? `<span class="detail">${esc(c.detail)}</span>` : ""}</span></li>`).join("")}</ul>`;
+    $("#saveState").textContent = "Saved";
+    syncAutoTasks(d);
+    if (all !== wasPassed) { renderHeader(); renderStepbar(); guidePractice(); }
+    if (all && !wasPassed) toast(stepDone(d, "practice") ? "Every lab passes: practice star ★" : "Exercise complete ✓");
+  } catch (e) { $("#output").innerHTML = `<pre class="stderr">${esc(e.message)}\nIs the Bench server still running in your terminal?</pre>`; }
+  btn.disabled = false; btn.textContent = "Check";
+}
+
+/* ---------- Notes drawer ---------- */
+async function openNotes() {
+  const d = S.day;
+  $("#overlay").innerHTML = `<div class="scrim" data-close></div><aside class="drawer" role="dialog" aria-label="Notes">
+    <div class="drawer-head"><div><h2>Notes · ${esc(d.title)}</h2><p>Write it like an interviewer asked. Saved to ${d.folder}/notes.md</p></div>
+      <button class="btn" data-close>Close</button></div>
+    <textarea id="notes" placeholder="In 3-5 lines: …"></textarea>
+    <div class="drawer-foot" id="notesState">Loading…</div></aside>`;
+  bindOverlayClose();
+  const r = await api(`/api/file?day=${d.folder}&name=notes.md`);
+  const ta = $("#notes"); if (!ta) return;
+  ta.value = r.content; ta.focus();
+  $("#notesState").textContent = r.content ? "Saved" : "Optional, but writing a few lines clears the notes mission.";
+  let timer;
+  ta.oninput = () => {
+    $("#notesState").textContent = "Saving…"; clearTimeout(timer);
+    timer = setTimeout(async () => {
+      await api("/api/file", { day: d.folder, name: "notes.md", content: ta.value });
+      P().notes[d.id] = ta.value.trim().length; saveProgress(); logActivity();
+      if ($("#notesState")) $("#notesState").textContent = "Saved";
+      syncAutoTasks(d);
+      if (S.day === d) { renderHeader(); renderStepbar(); if (S.step === "missions") guideMissions(); }
+    }, 600);
+  };
+}
+
+/* ---------- Arena map ---------- */
+function openMap() {
+  const cur = currentWeekIndex();
+  $("#overlay").innerHTML = `<div class="scrim" data-close></div><section class="map" role="dialog" aria-label="Map of arenas">
+    <div class="drawer-head"><div><h2>The map</h2>
+      <p>Each week is an arena and each day a level. Clear a level by finishing its missions; earn its three stars by reading the lesson, passing every lab and acing the quiz.</p></div>
+      <button class="btn" data-close>Close</button></div>
+    <div class="map-body">${S.weeks.map((w, i) => {
+      const { done, total } = weekCounts(w), pct = total ? Math.round(100 * done / total) : 0;
+      if (!w.days.length) {
+        const t = P().weekTasks[w.n] || [];
+        return `<div class="arena locked"><small>Arena ${w.n} · ${w.phase} · ${w.dates}</small><h3>${esc(w.title)}</h3>
+          <div class="meta">${inline(w.goal)}</div>
+          <ul>${w.tasks.map((task, j) => `<li><label><input type="checkbox" data-week="${w.n}" data-i="${j}" ${t[j] ? "checked" : ""}> ${inline(task)}</label></li>`).join("")}</ul>
+          <div class="gate"><strong>Gate:</strong> ${inline(w.gate)}</div>
+          <div class="gate locked-copy">Levels unlock after your Sunday retro. Tell Claude: <code>Week ${w.n - 1} retro: here's what I finished and what slipped. Give me Week ${w.n}'s daily plan for Bench.</code></div></div>`;
+      }
+      const got = w.days.reduce((n, d) => n + stars(d).filter(Boolean).length, 0);
+      return `<div class="arena ${i === S.week ? "current" : ""}"><small>Arena ${w.n} · ${w.phase} · ${w.dates}${i === cur ? " · this week" : ""}</small>
+        <h3>${esc(w.title)}</h3><div class="meta">${w.days.filter(dayDone).length}/${w.days.length} levels cleared · ${got}/${w.days.length * 3} ★</div>
+        <div class="bar"><span style="width:${pct}%"></span></div>
+        <div class="levels">${w.days.map((d, j) => levelNode(d, j + 1)).join("")}</div>
+        <div class="gate"><strong>Gate:</strong> ${inline(w.gate)}</div></div>`;
+    }).join("")}</div></section>`;
+  bindOverlayClose();
+  $(".map-body").onclick = e => { const b = e.target.closest(".node"); if (b) selectDay(b.dataset.day); };
+  $(".map-body").onchange = e => {
+    const n = e.target.dataset.week; if (!n) return;
+    (P().weekTasks[n] ||= [])[+e.target.dataset.i] = e.target.checked; saveProgress(); renderHeader();
+  };
+}
+function bindOverlayClose() { $("#overlay").onclick = e => { if (e.target.closest("[data-close]")) closeOverlay(); }; }
+function closeOverlay() { $("#overlay").innerHTML = ""; }
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#overlay").innerHTML) closeOverlay(); });
+
+/* ---------- Boot ---------- */
+(async function init() {
+  try {
+    const [cur, prog] = await Promise.all([api("/api/curriculum"), api("/api/progress")]);
+    S.weeks = cur.weeks; S.progress = prog; ensureProgress();
+  } catch (e) {
+    document.body.innerHTML = `<div class="fatal"><h2>Bench can't reach its server</h2><p>Start it from your terminal with <code>python server.py</code>, then reload this page.</p></div>`;
+    return;
+  }
+  $("#arenaBtn").onclick = openMap;
+  renderBenchShell();
+  if (P().settings.benchCollapsed) setBenchCollapsed(true);
+  const t = todayISO();
+  const pick = (P().last.day && findDay(P().last.day)) || allDays().find(d => d.date === t) || allDays().find(d => !dayDone(d)) || allDays()[0];
+  selectDay(pick.id);
+})();
+</script>
+<button class="ai-fab" id="aiFab" title="Ask the AI tutor about what's on screen">Ask AI</button>
+<div class="ai-panel" id="aiPanel" role="dialog" aria-label="AI tutor">
+  <div class="ai-head"><div><b>AI tutor</b><small id="aiWho">Sees this lesson and your editor code</small></div>
+    <div><button id="aiGear" title="AI settings">⚙</button><button id="aiClear" title="New conversation">⟲</button><button id="aiClose" title="Close">×</button></div></div>
+  <div class="ai-log" id="aiLog"></div>
+  <div class="ai-quick" id="aiQuick">
+    <button data-q="Explain this part more simply, with a real-life example.">Explain simpler</button>
+    <button data-q="Give me a hint for what I'm working on, without the solution.">Give me a hint</button>
+    <button data-q="Why does my code fail? Look at the editor.">Why does my code fail?</button>
+    <button data-q="Quiz me with 3 short questions on this lesson, one at a time.">Quiz me</button>
+  </div>
+  <form class="ai-form" id="aiForm"><textarea id="aiInput" placeholder="Ask anything… (Enter to send, Shift+Enter for new line)"></textarea><button>Send</button></form>
+</div>
+<div id="settingsOverlay"></div>
+<script>
+const AI = { history: [] };
+function aiAdd(cls, html) {
+  const log = $("#aiLog"), d = document.createElement("div");
+  d.className = "ai-msg " + cls; d.innerHTML = html; log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+}
+function aiWelcome() {
+  $("#aiLog").innerHTML = "";
+  aiAdd("bot", "Stuck on something? Ask me about this lesson, the exercise, or an error you got. The buttons below are shortcuts.");
+  api("/api/llm/settings").then(s => {
+    const p = s.providers[s.provider];
+    $("#aiWho").textContent = p ? `${p.label.split(" (")[0]} · ${p.model_chosen || p.model}` : "Not set up yet";
+    if (!p || (p.needs_key && !p.has_key)) aiAdd("bot warn", `First, connect a free AI model (takes 1 minute). ${settingsLink()}`);
+  }).catch(() => {});
+}
+function openTutor(text, send) {
+  $("#aiPanel").classList.add("open");
+  if (!$("#aiLog").children.length) aiWelcome();
+  if (text) { $("#aiInput").value = text; if (send) $("#aiForm").requestSubmit(); }
+  $("#aiInput").focus();
+}
+async function aiSend(q) {
+  aiAdd("user", esc(q)); AI.history.push({ role: "user", content: q });
+  const wait = aiAdd("bot", "Thinking…");
+  try {
+    const r = await api("/api/ask", { messages: AI.history, context: tutorContext() });
+    AI.history.push({ role: "assistant", content: r.text });
+    wait.innerHTML = md(r.text, { tryable: false });
+  } catch (err) { AI.history.pop(); wait.className = "ai-msg bot err"; wait.innerHTML = `${esc(err.message)} ${settingsLink()}`; }
+  $("#aiLog").scrollTop = $("#aiLog").scrollHeight;
+}
+$("#aiFab").onclick = () => $("#aiPanel").classList.contains("open") ? $("#aiPanel").classList.remove("open") : openTutor();
+$("#aiClose").onclick = () => $("#aiPanel").classList.remove("open");
+$("#aiClear").onclick = () => { AI.history.length = 0; aiWelcome(); };
+$("#aiGear").onclick = () => openSettings();
+$("#aiLog").onclick = richClick;
+$("#aiQuick").onclick = e => { const q = e.target.dataset.q; if (q) aiSend(q); };
+$("#aiInput").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#aiForm").requestSubmit(); } });
+$("#aiForm").onsubmit = e => { e.preventDefault(); const q = $("#aiInput").value.trim(); if (!q) return; $("#aiInput").value = ""; aiSend(q); };
+
+/* ---------- AI settings: pick a free provider, paste a key, test it. No terminal needed. ---------- */
+async function openSettings() {
+  let s; try { s = await api("/api/llm/settings"); } catch (e) { return toast(e.message); }
+  let cur = s.provider || "gemini";
+  const ov = $("#settingsOverlay");
+  const render = () => {
+    const p = s.providers[cur];
+    ov.innerHTML = `<div class="scrim" data-close></div><div class="settings" role="dialog" aria-label="AI settings">
+      <div class="drawer-head"><div><h2>AI settings</h2><p>Used by the tutor and by your labs (<code>from bench_llm import get_client</code>). Saved on this computer only.</p></div><button class="btn" data-close>Close</button></div>
+      <div class="set-body">
+        <p class="set-label">1. Choose a provider</p>
+        <div class="prov">${Object.entries(s.providers).map(([k, v]) => `<label class="prov-opt ${k === cur ? "on" : ""}">
+          <input type="radio" name="prov" value="${k}" ${k === cur ? "checked" : ""}>
+          <span><b>${esc(v.label.split(" (")[0])}</b><small>${esc((v.label.match(/\((.*)\)/) || [, ""])[1])}${v.has_key ? " · key saved " + esc(v.key_hint) : ""}</small></span></label>`).join("")}</div>
+        ${p.needs_key ? `<p class="set-label">2. Paste your API key <a href="${p.key_url}" target="_blank" rel="noopener">Get a free key ↗</a></p>
+          <input id="setKey" type="password" autocomplete="off" placeholder="${p.has_key ? "Saved (" + esc(p.key_hint) + "). Paste a new one to replace it." : "Paste the key here"}">`
+          : `<p class="set-label">2. Install Ollama <a href="${p.key_url}" target="_blank" rel="noopener">Download ↗</a></p>
+          <p class="hint">Open it, then in a terminal: <code>ollama pull ${esc(p.model)}</code>. No key, nothing leaves your computer.</p>`}
+        <p class="set-label">3. Model</p>
+        <div class="row"><input id="setModel" list="modelList" value="${esc(p.model_chosen || p.model)}"><datalist id="modelList"></datalist>
+          <button class="btn" id="listModels">List models</button></div>
+        <div id="modelPick" class="model-pick"></div>
+        <div class="row" style="margin-top:16px"><button class="btn go" id="saveTest">Save and test</button><span id="setMsg" class="hint"></span></div>
+      </div></div>`;
+    ov.onclick = e => { if (e.target.matches("[data-close]")) ov.innerHTML = ""; };
+    ov.onchange = e => { if (e.target.name === "prov") { cur = e.target.value; render(); } };
+    $("#listModels").onclick = async () => {
+      $("#setMsg").textContent = "Loading models…";
+      try {
+        await save();
+        const r = await api("/api/llm/models");
+        const chosen = $("#setModel").value.trim();
+        const box = $("#modelPick");
+        box.innerHTML = `<p class="hint">${r.models.length} models available to your key. Click one, then <b>Save and test</b>:</p>` +
+          r.models.map(m => `<button type="button" class="model-chip ${m === chosen ? "on" : ""}" data-model="${esc(m)}">${esc(m)}</button>`).join("");
+        box.onclick = e => { const b = e.target.closest("[data-model]"); if (!b) return;
+          $("#setModel").value = b.dataset.model; box.querySelectorAll(".model-chip").forEach(x => x.classList.toggle("on", x === b)); };
+        $("#setMsg").textContent = r.models.includes(chosen) ? "" : `“${chosen}” isn't in your list: pick one below.`;
+      } catch (e) { $("#setMsg").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+    };
+    $("#saveTest").onclick = async () => {
+      $("#setMsg").textContent = "Testing…";
+      try {
+        await save();
+        const r = await api("/api/llm/test", {});
+        $("#setMsg").innerHTML = r.ok ? `<span class="okc">✓ Connected: “${esc(r.text.trim().slice(0, 60))}” (${r.tokens_in} in / ${r.tokens_out} out tokens)</span>`
+                                     : `<span class="err">${esc(r.error)}</span>`;
+        if (r.ok) aiWelcome();
+      } catch (e) { $("#setMsg").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+    };
+  };
+  const save = async () => {
+    const key = $("#setKey")?.value.trim();
+    s = await api("/api/llm/settings", { provider: cur, key: key ? key : null, model: $("#setModel").value.trim() || null });
+    if ($("#setKey")) $("#setKey").value = "";
+  };
+  render();
+}
+(() => {
+  const b = document.createElement("button");
+  b.className = "icon-btn ai-gear"; b.title = "AI settings: choose a free model for the tutor and your labs";
+  b.innerHTML = "⚙ AI"; b.onclick = openSettings;
+  document.querySelector("header").appendChild(b);
+})();
+</script>
+</body>
+</html>

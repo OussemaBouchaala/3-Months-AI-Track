@@ -1,0 +1,42 @@
+[
+  {
+    "text": "Villa for sale in Les Berges du Lac, 4 rooms, 250m2, 1,200,000 TND.",
+    "label": { "price_tnd": 1200000.0, "surface_m2": 250.0, "rooms": 4, "city": "Les Berges du Lac" }
+  },
+  {
+    "text": "Apartment in Lac 2, 3 rooms, 95m2. Price: 650,000 TND.",
+    "label": { "price_tnd": 650000.0, "surface_m2": 95.0, "rooms": 3, "city": "Lac 2" }
+  },
+  {
+    "text": "F1 Studio in Centre Ville Sfax. 35,000 TND. 30 m2.",
+    "label": { "price_tnd": 35000.0, "surface_m2": 30.0, "rooms": 1, "city": "Sfax" }
+  },
+  {
+    "text": "شقة للبيع في الحمامات، 4 غرف، 120م2، بسعر 850,000 دينار.",
+    "label": { "price_tnd": 850000.0, "surface_m2": 120.0, "rooms": 4, "city": "La Hammamet" }
+  },
+  {
+    "text": "Land in Sousse, 500m2. Contact for price.",
+    "label": { "price_tnd": null, "surface_m2": 500.0, "rooms": null, "city": "Sousse" }
+  },
+  {
+    "text": "Villa T+3 in Ariana, 180m2, 950,000 TND.",
+    "label": { "price_tnd": 950000.0, "surface_m2": 180.0, "rooms": 4, "city": "Ariana" }
+  },
+  {
+    "text": "2 rooms apartment, Nabeul. 120,000 TND. Surface: 65m2.",
+    "label": { "price_tnd": 120000.0, "surface_m2": 65.0, "rooms": 2, "city": "Nabeul" }
+  },
+  {
+    "text": "Flat for rent in La Marsa, 3 rooms, 120m2. 5,500 TND/month.",
+    "label": { "price_tnd": 5500.0, "surface_m2": 120.0, "rooms": "three", "city": "La Marsa" }
+  },
+  {
+    "text": "Duplex in Sidi Bou Saïd. 750,000 TND.",
+    "label": { "price_tnd": 750000.0, "surface_m2": null, "rooms": null, "city": "Sidi Bou Saïd" }
+  },
+  {
+    "text": "شقة F2 في رادس، مساحة 55م2، سعر 180,000 دينار.",
+    "label": { "price_tnd": 180000.0, "surface_m2": 55.0, "rooms": 2, "city": "Rades" }
+  }
+]

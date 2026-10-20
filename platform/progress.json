@@ -1,0 +1,95 @@
+{
+  "tasks": {
+    "w1d1": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "w1d2": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "w1d3": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "weekTasks": {},
+  "quiz": {
+    "w1d1": {
+      "best": 3,
+      "total": 3,
+      "attempts": 2,
+      "last": 3
+    },
+    "w1d2": {
+      "best": 3,
+      "total": 3,
+      "attempts": 2,
+      "last": 3
+    },
+    "w1d3": {
+      "best": 3,
+      "total": 3,
+      "attempts": 2,
+      "last": 3
+    }
+  },
+  "retest": {},
+  "predictions": {
+    "day01/defaults.py": "[1] ([1],)\n[1, 2] ([1, 2],)\n[1, 2, 5] ([1, 2, 5],)\n[1] [2] [3]\n[1, 2, 3] [1, 2, 3] [1, 2, 3]",
+    "day02/load_test.py": "/blocking 0.04\n/awaiting 0.01\n/threaded 0.01\n/fixed    0.01",
+    "day02/app_async.py": "",
+    "day03/decorators.py": "ok",
+    "day03/generators.py": "nice",
+    "day03/contexts.py": "s"
+  },
+  "activity": [
+    "2026-10-05",
+    "2026-10-07"
+  ],
+  "settings": {
+    "predictFirst": true
+  },
+  "last": {
+    "day": "w1d4",
+    "file": "poly_fit.py"
+  },
+  "checks": {
+    "day02/app_async.py": {
+      "passed": 9,
+      "total": 9,
+      "at": "2026-10-07T13:09:51.835Z"
+    },
+    "day02/load_test.py": {
+      "passed": 5,
+      "total": 5,
+      "at": "2026-10-07T13:18:40.624Z"
+    },
+    "day03/decorators.py": {
+      "passed": 9,
+      "total": 9,
+      "at": "2026-10-07T14:01:37.093Z"
+    },
+    "day03/generators.py": {
+      "passed": 8,
+      "total": 8,
+      "at": "2026-10-07T15:38:27.888Z"
+    },
+    "day03/contexts.py": {
+      "passed": 9,
+      "total": 9,
+      "at": "2026-10-07T15:44:01.334Z"
+    }
+  }
+}

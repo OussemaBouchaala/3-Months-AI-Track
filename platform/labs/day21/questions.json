@@ -1,0 +1,8 @@
+[
+  {"question": "How much commission does a buyer pay?", "lang": "en",
+   "answer": "2% of the final sale price, plus VAT, due at the notary signing.", "source_ids": ["c0"]},
+  {"question": "Combien de temps faut-il pour récupérer la caution ?", "lang": "fr",
+   "answer": "Au plus 30 jours après la remise des clés, moins les réparations éventuelles.", "source_ids": ["c2"]},
+  {"question": "هل تبيع الوكالة السيارات؟", "lang": "ar",
+   "answer": "", "source_ids": []}
+]

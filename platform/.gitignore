@@ -1,0 +1,8 @@
+__pycache__/
+.vscode/
+progress.local.json
+progress.local.tmp
+llm_settings.local.json
+_backup_before_ai/
+_snapshot.tgz
+_update.tgz
