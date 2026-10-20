@@ -1,0 +1,15 @@
+import re
+text = re.sub(r"<!--.*?-->", "", src, flags=re.S).strip()
+lines = [l for l in text.splitlines() if l.strip()]
+body = "\n".join(lines[1:])
+n_words = len(body.split())
+check("no TODO comments left", "TODO" not in src)
+check("first line is a short 'Subject:' (under 80 characters)", lambda: lines and re.match(r"Subject:\s*\S", lines[0]) and len(lines[0]) <= 80)
+check("120 to 250 words", lambda: 120 <= n_words <= 250 or (_ for _ in ()).throw(CheckFailed(f"{n_words} words")))
+check("addresses Anis", lambda: re.search(r"\bAnis\b", body[:120]))
+check("accuracy with the test set size", lambda: re.search(r"\d+\s*%|0\.\d{2}", body) and re.search(r"\d+\s+(held-out |test |unseen )?questions", body, re.I))
+check("latency in seconds", lambda: re.search(r"\d+(\.\d+)?\s*(s\b|sec|seconds|secondes)", body, re.I))
+check("cost in TND, USD or EUR", lambda: re.search(r"\d+(\.\d+)?\s*(TND|DT|USD|\$|EUR|€)|(\$|€)\s*\d", body))
+check("links to the repository and the video", lambda: re.search(r"https?://github\.com/\S+", body) and re.search(r"https?://(www\.)?(youtube\.com|youtu\.be|loom\.com|drive\.google\.com|vimeo\.com)/\S+", body))
+check("one honest limitation", lambda: re.search(r"\b(limit\w*|weak\w*|fails?|still|not yet|struggl\w*|hardest)\b", body, re.I))
+check("ends with a clear ask (a question)", lambda: re.search(r"\?\s*$", re.split(r"\n\s*(best|regards|thanks|thank you|cordialement|merci)\b", body, flags=re.I)[0].strip()))

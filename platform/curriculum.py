@@ -5,6 +5,15 @@ To add next week's daily plan: append day dicts to that week's "days" list
 """
 from curriculum_week1 import WEEK1
 from curriculum_week3 import WEEK3
+from curriculum_week4 import WEEK4
+from curriculum_week5 import WEEK5
+from curriculum_week6 import WEEK6
+from curriculum_week7 import WEEK7
+from curriculum_week8 import WEEK8
+from curriculum_week9 import WEEK9
+from curriculum_week10 import WEEK10
+from curriculum_week11 import WEEK11
+from curriculum_week12 import WEEK12
 from lab_files import lab
 
 PROJECT = "Document extraction service: messy real estate listings (Arabic, French, English) to clean JSON."
@@ -708,40 +717,13 @@ CURRICULUM = [
     WEEK1,
     WEEK2,
     WEEK3,
-    roadmap_week(4, "Phase 1", "Evaluation", "Oct 26-Nov 1",
-                 "An eval script and a results table.",
-                 ["Test set of 50-100 questions with expected answers", "Retrieval recall@k",
-                  "Answer faithfulness (LLM-as-judge or [RAGAS](https://docs.ragas.io))", "Latency and cost per query"], "Eval table"),
-    roadmap_week(5, "Phase 1", "Tool calling and agents", "Nov 2-8",
-                 "An agent that performs one real action.",
-                 ["Function calling with tool schemas ([Anthropic tool use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use), [OpenAI function calling](https://platform.openai.com/docs/guides/function-calling))", "Agent calling your own FastAPI endpoints", "[MCP](https://modelcontextprotocol.io) basics"],
-                 "Working agent"),
-    roadmap_week(6, "Phase 1", "Real Arabic data", "Nov 9-15",
-                 "Arabic RAG prototype with eval numbers.",
-                 ["Pick and load a public Arabic corpus ([Hugging Face](https://huggingface.co/datasets?language=language:ar))", "Normalization: alef/hamza, taa marbuta, diacritics",
-                  "Mixed Arabic/English/French text", "Re-run the Week 4 eval on Arabic questions"],
-                 "Arabic RAG prototype with eval numbers"),
-    roadmap_week(7, "Phase 2", "Scope the project", "Nov 16-22",
-                 "One-page problem statement with a real user and data.",
-                 ["Choose the project option", "Confirm the real user and data access",
-                  "Success metrics: accuracy, latency, cost targets"], "Signed-off scope"),
-    roadmap_week(8, "Phase 2", "Build I", "Nov 23-29",
-                 "Ingestion and retrieval working end to end.",
-                 ["Ingestion pipeline (OCR/parsing, chunking, indexing)", "Retrieval + generation with citations"],
-                 "End-to-end path works"),
-    roadmap_week(9, "Phase 2", "Build II", "Nov 30-Dec 6",
-                 "Tool calling and a usable UI.",
-                 ["Tool calling for at least one real action", "Simple web UI"], "Usable demo"),
-    roadmap_week(10, "Phase 2", "Evaluate", "Dec 7-13",
-                 "Two configurations compared on accuracy, latency, cost.",
-                 ["Compare self-hosted vs API, with vs without reranker", "Results table", "Failure cases written up"],
-                 "Results table"),
-    roadmap_week(11, "Phase 2", "Ship", "Dec 14-20",
-                 "Deployable, documented, tested.",
-                 ["[Docker Compose](https://docs.docker.com/compose/) deployment", "README and architecture diagram", "Tests for core functions"],
-                 "One-command run"),
-    roadmap_week(12, "Phase 2", "Present", "Dec 21-27",
-                 "Demo video and the message to Anis.",
-                 ["3-5 minute demo video", "Update CV and [LinkedIn](https://www.linkedin.com/)", "Send the follow-up message to Anis"],
-                 "Message sent"),
+    WEEK4,
+    WEEK5,
+    WEEK6,
+    WEEK7,
+    WEEK8,
+    WEEK9,
+    WEEK10,
+    WEEK11,
+    WEEK12,
 ]

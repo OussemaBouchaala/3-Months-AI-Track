@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assistant</title>
+  <style>
+    body { font-family: system-ui, "Segoe UI", Tahoma, sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; background: #fafafa; color: #222; }
+    #log { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+    .msg { padding: 10px 12px; border-radius: 10px; white-space: pre-wrap; line-height: 1.5; }
+    .user { background: #dbeafe; align-self: flex-end; max-width: 80%; }
+    .bot { background: #fff; border: 1px solid #ddd; max-width: 90%; }
+    .sources { font-size: 0.85em; color: #555; margin-top: 6px; }
+    form { display: flex; gap: 8px; }
+    textarea { flex: 1; font: inherit; padding: 8px; min-height: 48px; }
+    button { font: inherit; padding: 8px 14px; }
+  </style>
+</head>
+<body>
+  <h1>Assistant</h1>
+  <div id="log"></div>
+  <form id="form">
+    <!-- TODO: a textarea with id="message" (dir="auto") and a submit button with id="send" -->
+  </form>
+
+  <script>
+    // TODO 1. let sessionId = null;
+    // TODO 2. addMessage(text, who): create a div.msg.<who>, set dir="auto", put the text with textContent
+    //         (NEVER innerHTML with model output: an answer containing <img onerror=...> would run code), append to #log.
+    // TODO 3. On submit: prevent the reload, read and clear the textarea, show the user message,
+    //         disable the button while waiting, POST JSON {message, session_id: sessionId} to "/chat".
+    //         If the response is not ok, show "Erreur, réessayez." Keep the session_id from the reply.
+    // TODO 4. Show reply.answer. If reply.sources: a div.sources listing "[n] title > section" (textContent again).
+    // TODO 5. If reply.type === "confirm": add a "Confirmer" button that POSTs {session_id, action_id} to "/chat/confirm"
+    //         and shows the result status; disable it after one click.
+    // TODO 6. Re-enable the button in a finally block, so an error never leaves the form stuck.
+  </script>
+</body>
+</html>

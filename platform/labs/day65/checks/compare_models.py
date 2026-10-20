@@ -1,0 +1,16 @@
+pc = fn("per_category")
+R1 = [{"id": "q1", "category": "fees", "correct": 1}, {"id": "q2", "category": "fees", "correct": 0}, {"id": "q3", "category": "deposit", "correct": 1}, {"id": "q4", "category": "pets", "correct": 0}]
+R2 = [{"id": "q1", "category": "fees", "correct": 1}, {"id": "q2", "category": "fees", "correct": 1}, {"id": "q3", "category": "deposit", "correct": 0}, {"id": "q9", "category": "x", "correct": 1}]
+check("per_category: mean per category, sorted", lambda: pc(R1, "correct") == {"deposit": 1.0, "fees": 0.5, "pets": 0.0} and list(pc(R1, "correct")) == ["deposit", "fees", "pets"])
+pp = fn("parse_preference")
+check("parse_preference: [[X]] format", lambda: pp("blah [[A]]") == "A" and pp("[[ tie ]]") == "TIE" and pp("I think [[B]].") == "B")
+check("parse_preference: last standalone verdict word", lambda: pp("Answer A cites the wrong clause, so B is better. Verdict: B") == "B" and pp("answer a is better") == "A")
+check("parse_preference: tie, égalité, or nothing -> TIE", lambda: pp("It's a tie.") == "TIE" and pp("Égalité") == "TIE" and pp("Both are fine") == "TIE")
+check("parse_preference doesn't read 'a' inside words", lambda: pp("Both answers are about the same") == "TIE")
+db = fn("debias")
+check("debias: a win must survive the swap", lambda: db("A", "B") == "model1" and db("B", "A") == "model2" and db("A", "A") == "tie" and db("TIE", "B") == "tie")
+wr = fn("win_rate")
+check("win_rate counts ties as half", lambda: wr(["model1", "model2", "tie", "tie"]) == 0.5 and wr(["model1", "model1", "tie", "model2"]) == 0.625 and wr([]) is None)
+check("win_rate for model2", lambda: wr(["model1", "model2", "model2", "tie"], "model2") == 0.625)
+pa = fn("paired")
+check("paired compares only shared questions", lambda: pa(R1, R2, "correct") == {"n": 3, "only1": 1, "only2": 1, "both": 1, "neither": 0})

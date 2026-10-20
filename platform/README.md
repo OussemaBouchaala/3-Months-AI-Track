@@ -83,14 +83,28 @@ Check imports your file (code under `if __name__ == "__main__":` is skipped), th
 - **Servers:** Day 2 and Week 2 have FastAPI apps. Run those in a separate terminal with `uvicorn` (the lesson shows the command); Bench stops any script after 60 seconds. Change the limit with the `RUN_TIMEOUT` environment variable.
 - **Internet:** the code editor and fonts load from a CDN. Offline, Bench falls back to a plain text editor; everything else still works.
 - **Your files are never overwritten:** starter code is only written to files that are missing or empty.
-- **Progress** lives in `bench/progress.local.json`, which git ignores, so switching branches or pulling never touches it. On first start it carries over anything in the old `progress.json`. Back it up if you like.
+- **Progress** lives in `platform/progress.local.json`, which git ignores, so switching branches or pulling never touches it. On first start it carries over anything in the old `progress.json`. Back it up if you like.
 - **Different lab location:** set `LAB_DIR` before starting, e.g. `set LAB_DIR=D:\code\my-work` (Windows) or `export LAB_DIR=...` (Mac/Linux).
 - **Safety:** Bench listens only on 127.0.0.1 and runs the code you write on your own machine. Don't expose it to a network.
 
-## Next week's lessons
+## The 12 weeks
 
-Weeks 3-12 show their goals and tasks. Each Sunday, tell Claude:
+All twelve weeks are in Bench, each with daily lessons, labs with checks, quizzes and a Sunday boss.
 
-> Week N retro: here's what I finished and what slipped. Give me Week N+1's daily plan for Bench.
+| Week | Dates | Topic | Needs on your machine |
+|---|---|---|---|
+| 1-2 | Oct 5-18 | Fundamentals, LLM basics and serving | Python |
+| 3 | Oct 19-25 | RAG from scratch | Ollama (`bge-m3`), Docker for pgvector |
+| 4 | Oct 26-Nov 1 | Evaluation | a model in Bench's AI settings |
+| 5 | Nov 2-8 | Tool calling and agents, MCP | `mcp` package |
+| 6 | Nov 9-15 | Real Arabic data (ARCD) | internet once, to download ARCD |
+| 7 | Nov 16-22 | Scope your project: interview, targets, golden set | a real user |
+| 8 | Nov 23-29 | Build I: parsing, OCR, indexing, citations, service | Tesseract with Arabic and French |
+| 9 | Nov 30-Dec 6 | Build II: action tool, chat, streaming, web page, usability test | 3-5 test users |
+| 10 | Dec 7-13 | Evaluate: grid, local vs API, intervals, cost, failures | |
+| 11 | Dec 14-20 | Ship: tests, settings, logs, Docker Compose, CI, README | Docker, a GitHub repository |
+| 12 | Dec 21-27 | Present: demo video, CV, LinkedIn, interviews, message to Anis | OBS (screen recording) |
 
-You'll get an updated `curriculum.py` plus that week's `labs/dayNN/` folders (starters and checks). Replace them and restart Bench. Your progress and code are kept.
+From Week 7 on, the labs are the pieces of your own Phase 2 project: copy them into its repository as you go.
+
+If a week's plan needs to change after a Sunday retro, tell Claude what you finished and what slipped; you'll get an updated week module (`curriculum_weekN.py`) and its `labs/dayNN/` folders. Replace them and refresh the page. Your progress and code are kept.

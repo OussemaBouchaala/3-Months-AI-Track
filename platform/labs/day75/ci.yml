@@ -1,0 +1,16 @@
+# GitHub Actions: on every push and pull request, lint, test, and build the image.
+# In your project repository this file goes in .github/workflows/ci.yml
+name: CI
+
+# TODO: run on push to main and on pull_request
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # TODO: actions/setup-python@v5 with python-version "3.12" and cache: pip
+      # TODO: pip install -r requirements.txt (plus pytest and ruff)
+      # TODO: ruff check .
+      # TODO: python -m pytest -q
+  # TODO: a second job "docker" that needs: test, checks out the code and runs docker build -t assistant .

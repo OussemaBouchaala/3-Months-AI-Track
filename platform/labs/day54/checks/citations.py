@@ -1,0 +1,17 @@
+nm = fn("normalize_markers")
+check("normalize_markers: [1, 2], [1,2] and [1] [2] -> [1][2]", lambda: nm("a [1, 2]. b [3,4]. c [5] [6].") == "a [1][2]. b [3][4]. c [5][6].")
+cc = fn("clean_citations")
+check("clean_citations removes out-of-range markers and reports them", lambda: cc("Deux mois [1, 4]. Oui [0][2].", 3) == ("Deux mois [1]. Oui [2].", [0, 4]))
+sc = fn("sentence_citations")
+check("sentence_citations: per sentence, markers removed", lambda: sc("Deux mois [1]. Avec un chat [2][1] un demi-mois. Merci!") == [("Deux mois.", [1]), ("Avec un chat un demi-mois.", [2, 1]), ("Merci!", [])])
+check("a marker after the period stays with its sentence", lambda: sc("Le loyer est 900 TND. [2]") == [("Le loyer est 900 TND.", [2])])
+check("Arabic question mark splits too", lambda: len(sc("هل يمكن؟ نعم [1].")) == 2)
+cv = fn("citation_coverage")
+check("citation_coverage: share of cited sentences, IDK = 1.0", lambda: approx(cv("A [1]. B. C [2]. D."), 0.5) and cv("I don't know based on the documents.") == 1.0)
+uc = fn("unsupported_claims")
+chunks = [{"title": "R", "section": "Caution", "doc_id": "reg", "text": "Le locataire paie une caution de deux mois de loyer."},
+          {"title": "R", "section": "", "doc_id": "faq", "text": "Avec un animal, la caution augmente d'un demi-mois."}]
+check("unsupported_claims catches a sentence its source doesn't say", lambda: uc("La caution est de deux mois de loyer [1]. Le chat doit être vacciné [2].", chunks) == ["Le chat doit être vacciné."])
+check("a sentence supported by one of its sources passes", lambda: uc("Avec un animal la caution augmente [1][2].", chunks) == [])
+rs = fn("render_sources")
+check("render_sources in citation order, section only when present", lambda: rs("X [2]. Y [1][2].", chunks).splitlines() == ["[2] R (faq)", "[1] R > Caution (reg)"])
