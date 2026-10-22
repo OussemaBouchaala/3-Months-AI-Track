@@ -1203,7 +1203,6 @@ function openMap() {
 }
 function bindOverlayClose() { $("#overlay").onclick = e => { if (e.target.closest("[data-close]")) closeOverlay(); }; }
 function closeOverlay() { $("#overlay").innerHTML = ""; }
-document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#overlay").innerHTML) closeOverlay(); });
 
 /* ---------- Boot ---------- */
 (async function init() {
@@ -1269,6 +1268,21 @@ async function aiSend(q) {
 }
 $("#aiFab").onclick = () => $("#aiPanel").classList.contains("open") ? $("#aiPanel").classList.remove("open") : openTutor();
 $("#aiClose").onclick = () => $("#aiPanel").classList.remove("open");
+/* ---------- Click outside (or Escape) closes the top window: settings, then notes/map, then the tutor ---------- */
+const LAYERS = [
+  { open: () => !!$("#settingsOverlay").innerHTML, inside: ".settings", close: () => { $("#settingsOverlay").innerHTML = ""; } },
+  { open: () => !!$("#overlay").innerHTML, inside: "#overlay [role=dialog]", close: closeOverlay },
+  { open: () => $("#aiPanel").classList.contains("open"), inside: "#aiPanel, #aiFab, [data-asktutor]", close: () => $("#aiPanel").classList.remove("open") },
+];
+const topLayer = () => LAYERS.find(l => l.open());
+let downOutside = false;
+document.addEventListener("pointerdown", e => { const l = topLayer(); downOutside = !!l && !e.target.closest(l.inside); }, true);
+document.addEventListener("click", e => {
+  const l = topLayer();
+  if (l && downOutside && e.target.isConnected && !e.target.closest(l.inside)) l.close();
+  downOutside = false;
+}, true);
+document.addEventListener("keydown", e => { if (e.key === "Escape") topLayer()?.close(); });
 $("#aiClear").onclick = () => { AI.history.length = 0; aiWelcome(); };
 $("#aiGear").onclick = () => openSettings();
 $("#aiLog").onclick = richClick;
