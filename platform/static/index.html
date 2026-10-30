@@ -370,6 +370,19 @@ details.blk.reveal summary { cursor: pointer; font-weight: 600; color: var(--cob
 .blk.example { border-left: 4px solid var(--ok); background: #F3FAF6; }
 .blk.example .blk-tag { color: var(--ok); }
 .your-turn { margin-top: 18px; }
+/* ---- Study mode (walkthrough) ---- */
+.wt-step { border-left: 4px solid var(--cobalt); }
+.wt-step .blk-tag { color: var(--cobalt); text-transform: none; letter-spacing: 0; font-size: 13px; }
+.wt-step .blk-tag code { font-size: 13px; }
+.wt-step .show-src { float: right; }
+.wt-guess { margin: 10px 0 6px; font-size: 13px; color: var(--ink-soft); }
+.wt-ex { margin: 6px 0 0; padding: 9px 12px; background: #0D1628; color: #E6EDF7; border-radius: var(--r-sm); font: 12.5px/1.55 var(--mono); white-space: pre-wrap; overflow-x: auto; }
+.wt-ex .got { color: #CFE3C8; }
+.wt-ex .got.bad { color: #FFB4A8; }
+.wt-ex .note { color: #8FA3C0; font-style: italic; }
+.wt-main { border-left: 4px solid var(--ok); background: #F3FAF6; }
+.wt-main .blk-tag { color: var(--ok); }
+.wt-old { border-left: 4px solid var(--gold); background: #FFF8E6; }
 .your-turn .blk-tag { color: var(--cobalt); }
 .err { color: var(--err); } .okc { color: var(--ok); }
 .ai-quick { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 10px 0; }
@@ -860,6 +873,7 @@ function splitBrief(body) {
 
 function guidePractice() {
   const d = S.day, f = d.files[S.ex];
+  if (f.study) return guideStudy();
   const dots = d.files.map((x, i) => `<button class="ex-dot ${i === S.ex ? "current" : ""} ${labPassed(d, x) ? "passed" : ""}" data-ex="${i}" title="${esc(labTitle(x))}">${labPassed(d, x) && i !== S.ex ? "✓" : i + 1}</button>`).join("");
   const lines = (f.brief || "").split("\n");
   const hasTopic = lines[0]?.startsWith("**Topic:**");
@@ -900,6 +914,91 @@ function guidePractice() {
     richClick(e);
   };
   $("#guide").oninput = richInput;
+  $("#nextBtn").onclick = () => last ? goNext() : selectExercise(S.ex + 1);
+}
+/* ---------- Study mode: read each function, guess, run its example, then run the whole file ---------- */
+async function studyCode(d, f) {
+  if (S.file === f.name && S.fileDay === d.folder && S.editor) return S.editor.getValue();
+  const r = await api(`/api/file?day=${d.folder}&name=${encodeURIComponent(f.name)}`);
+  return r.content.trim() ? r.content : f.starter;
+}
+async function guideStudy() {
+  const d = S.day, f = d.files[S.ex], ex = S.ex;
+  const dots = d.files.map((x, i) => `<button class="ex-dot ${i === S.ex ? "current" : ""} ${labPassed(d, x) ? "passed" : ""}" data-ex="${i}" title="${esc(labTitle(x))}">${labPassed(d, x) && i !== S.ex ? "✓" : i + 1}</button>`).join("");
+  const last = S.ex === d.files.length - 1, passed = labPassed(d, f), isPy = f.name.endsWith(".py");
+  const code = await studyCode(d, f);
+  if (S.day !== d || S.ex !== ex || S.step !== "practice") return;
+  const old = /\bTODO\b/.test(code) && !/\bTODO\b/.test(f.starter);
+  const w = isPy && !old ? await api("/api/walkthrough", { code }) : { steps: [] };
+  if (S.day !== d || S.ex !== ex || S.step !== "practice") return;
+  const n = (w.steps || []).length;
+  const stepHtml = (w.steps || []).map((st, i) => `<div class="blk wt-step" data-step="${i}">
+      <div class="blk-tag">Part ${i + 1} of ${n} · <code>${esc(st.signature)}</code>
+        <button class="linkish show-src" data-showsrc="${attr(st.name)}">Show in editor</button></div>
+      ${st.explain ? md(st.explain, { tryable: false }) : ""}
+      <div class="snippet"><pre><code>${esc(st.code)}</code></pre></div>
+      ${st.examples.length ? `<p class="wt-guess"><b>Guess first:</b> what will this print?${st.note ? ` <i>(${inline(st.note)})</i>` : ""}</p>
+        <div class="wt-ex">${st.examples.map(e => esc(">>> " + e.source.replace(/\n/g, "\n... "))).join("\n")}</div>
+        <button class="btn small" data-runex="${attr(st.name)}" style="margin-top:8px">Run example ▶</button>
+        <div class="wt-res"></div>` : ""}
+    </div>`).join("");
+  const intro = !isPy ? (f.brief ? md(f.brief, { tryable: false }) : "<p>This file is complete. Read it in the editor: the comments explain each part.</p>")
+    : w.intro ? md(w.intro, { tryable: false }) : "";
+  $("#guide").innerHTML = `<div class="guide-inner prose brief">
+    <p class="kicker">Step 2 · Study the code</p>
+    <div class="ex-nav"><div class="ex-dots">${dots}</div><span class="ex-count">File ${S.ex + 1} of ${d.files.length}</span></div>
+    <h2 class="title">${esc(labTitle(f))}</h2>
+    ${old ? `<div class="blk wt-old"><div class="blk-tag">Old exercise version</div>
+      <p>This file still has the old fill-in-the-TODOs version. Load the complete, documented version to study it.
+      Your current file is kept as a copy next to it.</p>
+      <button class="btn small go" data-loadstudy>Load the complete version</button></div>` : ""}
+    ${intro}
+    ${isPy && n ? `<p class="hint">Read each part, guess what its example prints, then press <b>Run example</b>. At the end, run the whole file.</p>` : ""}
+    ${w.error ? `<div class="blk mistake"><div class="blk-tag">Can't read the file</div><p>${esc(w.error)}</p></div>` : ""}
+    ${stepHtml}
+    ${isPy && !old ? `<div class="blk wt-main"><div class="blk-tag">Finally · run the whole file</div>
+      ${w.main ? `<p>This is what runs when you press <b>Run</b>:</p><div class="snippet"><pre><code>${esc(w.main)}</code></pre></div>` : "<p>Run it to see every part working together.</p>"}
+      <button class="btn small go" data-runall>Run the whole file ▶</button>
+      ${f.has_check ? `<button class="btn small" data-checkall>Check it</button>` : ""}</div>` : ""}
+    ${!isPy && f.has_check && !old ? `<div class="card">Press <strong>Check</strong> under the editor to confirm the file is complete.</div>` : ""}
+    ${passed ? `<div class="card"><strong>✓ All checks pass.</strong></div>` : ""}
+    ${nextBar(last ? (stepDone(d, "practice") ? "" : "Run the checks on each file to earn the practice star.") : "",
+      last ? nextLabel() : `Next file: ${esc(labTitle(d.files[S.ex + 1]))} →`, true)}
+  </div>`;
+  $(".ex-dots").onclick = e => { const b = e.target.closest(".ex-dot"); if (b) selectExercise(+b.dataset.ex); };
+  $("#guide").onclick = async e => {
+    const t = e.target;
+    if (t.matches("[data-loadstudy]")) {
+      t.disabled = true;
+      const dot = f.name.lastIndexOf("."), backup = f.name.slice(0, dot) + ".old" + f.name.slice(dot);
+      await api("/api/file", { day: d.folder, name: backup, content: code });
+      if (S.file === f.name && S.fileDay === d.folder) { S.editor.setValue(f.starter); await saveFile(); }
+      else await api("/api/file", { day: d.folder, name: f.name, content: f.starter });
+      toast(`Loaded. Your old file is saved as ${backup}`); return guideStudy();
+    }
+    if (t.matches("[data-showsrc]")) {
+      if (S.benchCollapsed) setBenchCollapsed(false);
+      const short = t.dataset.showsrc.split(".").pop();
+      const lines = S.editor.getValue().split("\n"), re = new RegExp(`^\\s*(async\\s+)?(def|class)\\s+${short}\\b`);
+      const i = lines.findIndex(l => re.test(l));
+      if (i >= 0 && S.editor.scrollIntoView) { S.editor.setCursor({ line: i, ch: 0 }); S.editor.scrollIntoView({ line: i, ch: 0 }, 120); S.editor.focus(); }
+      return;
+    }
+    if (t.matches("[data-runex]")) {
+      const box = t.nextElementSibling; t.disabled = true; t.textContent = "Running…";
+      try {
+        await flushSave();
+        const r = await api("/api/example", { day: d.folder, name: f.name, code: await studyCode(d, f), step: t.dataset.runex });
+        box.innerHTML = r.error ? `<div class="wt-ex"><span class="got bad">${esc(r.error)}</span></div>`
+          : `<div class="wt-ex">${r.results.map(x => `${esc(">>> " + x.source.replace(/\n/g, "\n... "))}${x.got || x.want ? `\n<span class="got ${x.error ? "bad" : ""}">${esc(x.got || "(nothing printed)")}</span>` : ""}${!x.ok && x.want && !x.error ? `\n<span class="note">the docstring says: ${esc(x.want)}</span>` : ""}`).join("\n")}</div>`;
+        logActivity();
+      } catch (err) { box.innerHTML = `<div class="wt-ex"><span class="got bad">${esc(err.message)}</span></div>`; }
+      t.disabled = false; t.textContent = "Run again ▶"; return;
+    }
+    if (t.matches("[data-runall]")) { if (S.benchCollapsed) setBenchCollapsed(false); return runCurrent(); }
+    if (t.matches("[data-checkall]")) { if (S.benchCollapsed) setBenchCollapsed(false); return checkCurrent(); }
+    richClick(e);
+  };
   $("#nextBtn").onclick = () => last ? goNext() : selectExercise(S.ex + 1);
 }
 function selectExercise(i) {
@@ -1011,18 +1110,18 @@ function setBenchCollapsed(v) {
 }
 async function syncBench() {
   const { name, lab } = benchTarget();
-  const isPyLab = !!lab && name.endsWith(".py");
+  const isPyLab = !!lab && name.endsWith(".py") && !lab.study;
   $("#benchChip").textContent = lab ? `Exercise ${S.ex + 1}` : "Scratchpad";
-  $("#benchLabel").innerHTML = lab ? `${esc(labTitle(lab))}<small>follow the comments</small>` : `Test any idea here<small>not graded</small>`;
+  $("#benchLabel").innerHTML = lab ? `${esc(labTitle(lab))}<small>${lab.study ? "complete, documented code" : "follow the comments"}</small>` : `Test any idea here<small>not graded</small>`;
   $("#benchHint").textContent = lab ? (name.endsWith(".py") ? "Ctrl+Enter runs · Ctrl+Shift+Enter checks" : "Check reads this file") : "Ctrl+Enter runs";
   $("#pfWrap").hidden = !isPyLab;
   $("#pf").checked = !!P().settings.predictFirst;
   $("#predictBox").hidden = !isPyLab;
-  $("#resetBtn").textContent = lab ? "Reset to starter" : "Clear";
+  $("#resetBtn").textContent = lab ? (lab.study ? "Reset to original" : "Reset to starter") : "Clear";
   if (S.file !== name || S.fileDay !== S.day.folder) {
     await openFile(name, lab);
     $("#output").innerHTML = `<div class="empty">${lab
-      ? (name.endsWith(".py") ? "Write a prediction, press <b>Run</b>, then <b>Check</b> to see what's right and what's missing." : "Edit the file, then press <b>Check</b>.")
+      ? (lab.study ? (name.endsWith(".py") ? "Follow the walkthrough on the left, then press <b>Run</b> to run the whole file." : "Read the file, then press <b>Check</b>.") : name.endsWith(".py") ? "Write a prediction, press <b>Run</b>, then <b>Check</b> to see what's right and what's missing." : "Edit the file, then press <b>Check</b>.")
       : "Scratchpad output appears here."}</div>`;
   }
   updateRunState();
@@ -1062,7 +1161,7 @@ async function openFile(name, lab) {
 function updateRunState() {
   const { lab } = benchTarget();
   const isPy = S.file?.endsWith(".py");
-  const needPred = !!lab && isPy && P().settings.predictFirst && !$("#predict").value.trim();
+  const needPred = !!lab && !lab.study && isPy && P().settings.predictFirst && !$("#predict").value.trim();
   const btn = $("#runBtn");
   btn.disabled = !isPy || needPred;
   btn.title = !isPy ? "This isn't a Python file: use Check" : needPred ? "Write a prediction first (or untick 'Predict first')" : "Run (Ctrl+Enter)";
@@ -1080,7 +1179,7 @@ async function saveFile(announce) {
 async function resetFile() {
   const { lab } = benchTarget();
   if (lab) {
-    if (!confirm("Replace this exercise with the starter? Your current code in it will be lost.")) return;
+    if (!confirm(lab.study ? "Put back the original file? Your changes to it will be lost." : "Replace this exercise with the starter? Your current code in it will be lost.")) return;
     S.editor.setValue(lab.starter); await saveFile(); toast("Reset to starter");
   } else { S.editor.setValue(SCRATCH_STARTER); await saveFile(); }
 }
@@ -1096,7 +1195,7 @@ async function runCurrent() {
   try {
     const r = await api("/api/run", { day: S.day.folder, name: S.file, code: S.editor.getValue() });
     savePending = false;
-    const pred = benchTarget().lab ? $("#predict").value.trim() : "";
+    const pred = benchTarget().lab && !benchTarget().lab.study ? $("#predict").value.trim() : "";
     $("#output").innerHTML = (pred ? compareHTML(pred, r) : "") + renderResult(r, !!pred);
     $("#saveState").textContent = "Saved"; logActivity();
   } catch (e) { $("#output").innerHTML = `<pre class="stderr">${esc(e.message)}\nIs the Bench server still running in your terminal?</pre>`; }

@@ -26,6 +26,7 @@ from pydantic import BaseModel
 import curriculum as curriculum_module
 import curriculum_week1
 import lab_files
+import walkthrough
 from lab_files import check_path
 
 ROOT = Path(__file__).resolve().parent
@@ -249,6 +250,47 @@ TUTOR_RULES = {
                 "DIFFERENT but realistic problem (not the exercise itself, never its solution). Give runnable "
                 "Python in one ```python block, the output it prints, and 2-3 bullets on why it works."),
 }
+
+
+class WalkIn(BaseModel):
+    code: str
+
+
+@app.post("/api/walkthrough")
+def walk(body: WalkIn):
+    """Study mode: the file split into one step per function, with its examples."""
+    return walkthrough.steps(body.code)
+
+
+class ExampleIn(BaseModel):
+    day: str
+    name: str
+    code: str
+    step: str
+
+
+@app.post("/api/example")
+def run_example(body: ExampleIn):
+    """Save the file, import it (without running its main block) and run one step's examples."""
+    target = safe_path(body.day, body.name)
+    if not target.name.endswith(".py") or not re.match(r"^[A-Za-z_][\w.]*$", body.step):
+        raise HTTPException(400, "Invalid example.")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(body.code, encoding="utf-8")
+    env = {**os.environ, "MPLBACKEND": "Agg", "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1",
+           "PYTHONPATH": os.pathsep.join(filter(None, [str(ROOT), os.environ.get("PYTHONPATH", "")]))}
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(ROOT / "walkthrough.py"), str(target), body.step],
+            cwd=target.parent, capture_output=True, text=True, encoding="utf-8",
+            errors="replace", timeout=RUN_TIMEOUT, env=env,
+        )
+    except subprocess.TimeoutExpired:
+        return {"error": f"Stopped after {RUN_TIMEOUT}s."}
+    for line in reversed(proc.stdout.splitlines()):
+        if line.startswith(walkthrough.MARK):
+            return json.loads(line[len(walkthrough.MARK):])
+    return {"error": (proc.stderr or proc.stdout)[-3000:] or "No result."}
 
 
 @app.post("/api/ask")

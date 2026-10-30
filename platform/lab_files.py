@@ -11,6 +11,9 @@ For briefs, both briefs/<stem>.md and briefs/<name>.md are accepted.
 from pathlib import Path
 
 LABS = Path(__file__).resolve().parent / "labs"
+# From this day on, labs are study files: complete, documented code you read and run
+# step by step (the Walkthrough), instead of starters with TODOs to fill in.
+STUDY_FROM_DAY = 25
 
 
 def check_path(folder: str, name: str) -> Path:
@@ -45,5 +48,6 @@ def lab(folder: str, name: str, task=None) -> dict:
         "brief": brief,
         "starter": (LABS / folder / name).read_text(encoding="utf-8"),
         "has_check": check_path(folder, name).exists(),
+        "study": int(folder[3:]) >= STUDY_FROM_DAY,
         "tasks": tasks,
     }
