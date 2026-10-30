@@ -17,14 +17,12 @@ print(len(body.split()), "words | ends with a question:", body.strip().endswith(
 
 Context in one line, his three questions answered with numbers, one honest limit, two links, one small ask.
 
-## Your mission
-Write and send the message that closes the program.
+## How to read this example
+An example of the message that closes the program. Notice how it's built:
 
-## Steps
-1. Subject line, greeting, one line of context.
-2. Accuracy (with the test set size), p95 latency, monthly cost: the numbers from results.md.
-3. One limitation, the two links, and an ask that's easy to say yes to.
-4. 120-250 words. Read it aloud once, then send it.
+1. **Subject, greeting, one line of context**.
+2. **The numbers he asked for**: accuracy (with the test set size), p95 latency, monthly cost.
+3. **One limitation**, the two links, and a small **ask** that's easy to say yes to.
+4. 120-250 words: short enough to read on a phone.
 
-## Done when
-**Check** passes and the message is sent.
+Press **Check** under the editor to see the rules a good version follows. When you write your own, keep this structure and use your real numbers.

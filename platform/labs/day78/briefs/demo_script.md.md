@@ -14,14 +14,12 @@ print("longest:", max(scenes, key=lambda s: s[1]))
 
 Showing a failure on purpose ("a blurry receipt fails, and it says so") builds more trust than a perfect run.
 
-## Your mission
-Write the script you'll record on Saturday.
+## How to read this example
+An example 3-5 minute demo script. Notice how it's built:
 
-## Steps
-1. Scene 1: the problem with a number, in 20-30 seconds. Your name can come at the end.
-2. Live scenes with real questions: one in Arabic or Derja, a follow-up, a booking with confirmation, an "I don't know".
-3. One scene with the results table, one with `docker compose up`.
-4. Each scene: what you say, and a `Screen:` line. Read it aloud with a timer.
+1. **Scene 1**: the problem with a number, in 20-30 seconds.
+2. **Live scenes** on real questions: Arabic or Derja, a follow-up, a booking with confirmation, an "I don't know".
+3. **The numbers** (results table) and **how it runs** (`docker compose up`).
+4. Every scene has what you **say** and a `Screen:` line for what is shown. Read it aloud with a timer: 3 to 5 minutes.
 
-## Done when
-**Check** passes and reading it aloud takes 3 to 5 minutes.
+Press **Check** under the editor to see the rules a good version follows. When you write your own, keep this structure and use your real numbers.

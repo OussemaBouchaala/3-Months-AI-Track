@@ -13,15 +13,12 @@ for h in hooks:
 
 LinkedIn shows about two lines before "...see more". The second hook earns the click; the first one gets scrolled past.
 
-## Your mission
-Write the post you'll publish with your demo video.
+## How to read this example
+An example LinkedIn post to publish with the demo video. Notice how it's built:
 
-## Steps
-1. Hook line with a number or a surprising fact.
-2. What, for whom, how well (3+ numbers from results.md).
-3. One thing that failed and what you learned. It's the part people comment on.
-4. GitHub link, 1-5 hashtags, no Markdown.
-5. Publish it the same day as the video. Reply to every comment in the first hour.
+1. **The hook line** has a number or a surprising fact: it's all most people read.
+2. **What, for whom, how well**: three or more real numbers.
+3. **One honest failure** and the lesson. It's the part people comment on.
+4. **The link and a few hashtags**, no Markdown (LinkedIn doesn't render it).
 
-## Done when
-**Check** passes and the post is published.
+Press **Check** under the editor to see the rules a good version follows. When you write your own, keep this structure and use your real numbers.

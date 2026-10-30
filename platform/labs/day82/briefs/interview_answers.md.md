@@ -16,14 +16,12 @@ print("numbers:", sum(c.isdigit() for c in answer) > 0, "| 'I' count:", answer.s
 
 Situation in one sentence, then mostly what "I" did and why, then the result in numbers. About 40 seconds.
 
-## Your mission
-Prepare the five answers, then say each out loud until it takes 30-90 seconds without reading.
+## How to read this example
+Example answers to five questions asked in every AI engineering interview. Notice how it's built:
 
-## Steps
-1. Write each answer from your real material: results.md, the failure taxonomy, usability.md, architecture decisions.
-2. Keep each 80-250 words, first person, with a number.
-3. Q4 must say what you learned; Q5 must name the alternative and the trade-off.
-4. Three questions for them. Record yourself answering Q1 once and listen to it.
+1. Each answer is **80-250 words** (30-90 seconds spoken), first person, with at least one number.
+2. They're built from real material: results, the failure taxonomy, the usability report, the architecture decisions.
+3. **Q4** says what was learned; **Q5** names the alternative and the trade-off.
+4. It ends with **three questions to ask them**.
 
-## Done when
-**Check** passes and you can answer Q1 and Q3 out loud without notes.
+Press **Check** under the editor to see the rules a good version follows. When you write your own, keep this structure and use your real numbers.
