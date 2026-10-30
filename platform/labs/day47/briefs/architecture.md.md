@@ -17,14 +17,12 @@ print("arrows:", diagram.count("-->"))
 
 `[(...)]` draws a database cylinder, `[...]` a box. Paste it into [mermaid.live](https://mermaid.live) to see it.
 
-## Your mission
-Describe the system you'll build in Weeks 8-11, before writing its code.
+## How to read this example
+An example one-page architecture for the agency assistant. Notice how it's built:
 
-## Steps
-1. List the components (reuse Phase 1: normalizer, chunker, hybrid search, agent tools).
-2. Draw the Mermaid flowchart (at least 5 arrows), outside the comment.
-3. Write the data flow of one real question from your interview.
-4. Two decisions written as "X instead of Y, because Z", and two risks.
+1. **Components** reuse Phase 1: normalizer, chunker, hybrid search, agent tools.
+2. **The Mermaid diagram** (paste it into [mermaid.live](https://mermaid.live) to see it drawn).
+3. **The path of one real question**, step by step, from the user to the answer.
+4. **Decisions** written as "X instead of Y, because Z", and **risks** with what you'd do about them. These are the parts an interviewer asks about.
 
-## Done when
-**Check** passes and the diagram renders on [mermaid.live](https://mermaid.live).
+Press **Check** under the editor to see the rules a good version follows. When you write your own, keep this structure and use your real numbers.

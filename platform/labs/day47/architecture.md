@@ -1,27 +1,46 @@
+<!-- An example one-page architecture for the agency assistant. Read it section by section; the panel on the left explains what each part does. -->
+
 # Architecture
 
 ## Overview
-<!-- TODO: 2-3 sentences: what the system does, for whom, running where (laptop, office PC, cloud). -->
+A local document assistant for a real estate agency in Sousse. Agents paste a client message and get an answer with citations from the agency's documents, and can book a visit. It runs on the office PC with Docker, with an optional API model.
 
 ## Components
-<!-- TODO: one bullet per component (at least 5): ingestion, PII scrubber, index (pgvector), retriever, LLM, API, UI, action tool... -->
+- Ingestion: parses PDFs, Word files and scans (OCR), scrubs PII, chunks by sentence.
+- Index: pgvector for embeddings (bge-m3 via Ollama) plus a BM25 index on normalized, stemmed text.
+- Retriever: hybrid search with RRF, then a reranker.
+- Generator: an LLM answering only from cited chunks.
+- Action tool: book_visit through the agency's visits API, with confirmation.
+- API: FastAPI with /ask, /chat and /feedback.
+- UI: one HTML page, right-to-left aware.
 
 ## Diagram
-<!-- TODO: a Mermaid flowchart with at least 5 arrows. Bench and GitHub both render it.
 ```mermaid
 flowchart LR
-    A[Documents] --> B[Ingestion]
+    Docs[PDFs, Word, scans] --> Ingest[Ingestion + OCR + PII scrub]
+    Ingest --> PG[(pgvector + BM25)]
+    UI[Web UI] --> API[FastAPI]
+    API --> Ret[Hybrid retriever + rerank]
+    Ret --> PG
+    API --> LLM[LLM]
+    API --> Tool[book_visit tool]
+    Tool --> Visits[(Visits API)]
 ```
--->
 
 ## Data flow
-<!-- TODO: numbered steps of one question, from the user's message to the answer with citations (at least 4). -->
+1. The agent pastes "Combien de mois de caution ?" in the UI.
+2. The API normalizes the text, detects French, and scrubs PII.
+3. Hybrid search returns the top 20 chunks; the reranker keeps 5.
+4. The LLM answers from the 5 numbered chunks and cites [1] to [5].
+5. The API checks the citations, and the UI shows the answer with the source page.
 
 ## Storage
-<!-- TODO: what is stored where (raw files, chunks, vectors, feedback, logs) and what is NOT stored (PII). -->
+Raw files stay in a local folder. Chunks, vectors and feedback live in Postgres. Logs keep timings and the masked question only. Phone numbers, CINs and names are never stored in the index or logs.
 
 ## Decisions
-<!-- TODO: at least 2 bullets "X instead of Y, because Z" (e.g. local embeddings instead of an API, because of the privacy constraint). -->
+- Local bge-m3 embeddings instead of an embeddings API, because the documents contain client data.
+- Hybrid search instead of vectors only, because Phase 1 showed +7 points of recall on names and dates.
 
 ## Risks
-<!-- TODO: at least 2 bullets: what could fail, and what you'll do about it. -->
+- Scanned contracts with bad OCR: measure OCR quality per page and flag low-quality pages for manual review.
+- Clients write Arabizi: detect it and measure how often; fall back to "I don't know" rather than guess.

@@ -16,14 +16,12 @@ for k, v in notes.items():
 
 Numbers ("20 a day", "10-15 min") turn a complaint into a target. Questions in the user's own language become your test set.
 
-## Your mission
-Interview one real person who would use your Phase 2 project, and write the notes here.
+## How to read this example
+An example of interview notes with an agency manager. Notice how it's built:
 
-## Steps
-1. Book 30 minutes. Ask about their **current** workflow, not about AI.
-2. Ask them to show you real documents and real questions from last week.
-3. Fill every section; quote their questions word for word (8 or more).
-4. Ask what would make them use it daily, and what they'd refuse.
+1. **Their workflow today**, in their words, before any talk of AI.
+2. **Real questions, word for word**: these become test-set items, so they're quoted exactly, in the language the client used.
+3. **Numbers they gave** (how many questions a day, how long an answer takes now): they become your targets on day 46.
+4. **What would make them use it daily, and what they'd refuse**: the limits of your scope.
 
-## Done when
-**Check** passes and you have 8 real questions for your test set.
+Press **Check** under the editor to see the rules a good version follows. When you write your own, keep this structure and use your real numbers.
