@@ -1,16 +1,35 @@
 # GitHub Actions: on every push and pull request, lint, test, and build the image.
-# In your project repository this file goes in .github/workflows/ci.yml
+# In your project this file lives at .github/workflows/ci.yml; GitHub runs it by itself.
 name: CI
 
-# TODO: run on push to main and on pull_request
+# When to run: every push to main, and every pull request (before it's merged).
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
+  # Job 1: is the code correct?
   test:
+    runs-on: ubuntu-latest              # a fresh Linux machine for every run
+    steps:
+      - uses: actions/checkout@v4       # get the repository's code
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip                    # reuse downloaded packages: faster runs
+      - name: Install
+        run: pip install -r requirements.txt pytest ruff
+      - name: Lint                      # unused imports, undefined names... fails on any problem
+        run: ruff check .
+      - name: Tests                     # day 71's tests; any failing test makes the run red
+        run: python -m pytest -q
+
+  # Job 2: does the image still build? Runs only if "test" passed.
+  docker:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # TODO: actions/setup-python@v5 with python-version "3.12" and cache: pip
-      # TODO: pip install -r requirements.txt (plus pytest and ruff)
-      # TODO: ruff check .
-      # TODO: python -m pytest -q
-  # TODO: a second job "docker" that needs: test, checks out the code and runs docker build -t assistant .
+      - name: Build image
+        run: docker build -t assistant .

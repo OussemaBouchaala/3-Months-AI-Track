@@ -18,14 +18,12 @@ for question, ok in [("What is it?", readme.split("\n")[1] != ""), ("Does it bui
 
 Four questions, answered in the first screen: what it is, whether it builds, how to run it, how well it works.
 
-## Your mission
-Write the README of your project repository.
+## How to read this example
+An example README for the project repository. Notice how it's built:
 
-## Steps
-1. Title, one sentence, CI badge.
-2. What it does (user's view), Architecture (Mermaid), Quickstart (exact commands).
-3. Configuration table from `settings.py`, Evaluation from `results.md`, Limitations.
-4. Ask someone to follow your Quickstart on a fresh machine. Fix every step where they got stuck.
+1. **Title, one sentence and the CI badge**: what a recruiter sees in 5 seconds.
+2. **What it does** from the user's point of view, then the **architecture** diagram.
+3. **Quickstart**: exact commands that work on a fresh machine.
+4. **Configuration** (from `settings.py`), **Evaluation** (from `results.md`) and honest **Limitations**.
 
-## Done when
-**Check** passes and someone else got the project running from the README alone.
+Press **Check** under the editor to see the rules a good version follows. When you write your own, keep this structure and use your real numbers.

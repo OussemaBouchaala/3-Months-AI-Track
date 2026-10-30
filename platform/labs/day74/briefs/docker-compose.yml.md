@@ -18,15 +18,15 @@ print("condition: healthy:  ", api_start(True))
 
 `depends_on: [db]` waits for the container to start, not for Postgres to be ready. `condition: service_healthy` waits for the health check.
 
-## Your mission
-Write the compose file that starts your whole project on the agency's PC.
+## How to read this file
+The file in the editor is the complete compose file that starts the whole project on the agency's PC. Read it service by service; the comments explain each line:
 
-## Steps
-1. `db`: data volume and a `pg_isready` health check.
-2. `ollama`: a models volume.
-3. `api`: build, port, `env_file`, service-name URLs, `depends_on` with health, restart, health check.
-4. Top-level `volumes:`.
-5. In your project folder: `docker compose up -d --build`, then `docker compose ps` (all healthy), then run the day56 smoke test.
+1. **`db`**: Postgres with pgvector, a data volume, and a `pg_isready` health check.
+2. **`ollama`**: the model server, with a volume so models are downloaded once.
+3. **`api`**: built from your Dockerfile, port 8000, settings from `.env`, the other services reached by **name** (`db`, `ollama`), `depends_on` with `condition: service_healthy`, restart, and its own health check.
+4. **`volumes:`** at the bottom declares the named volumes.
 
-## Done when
-**Check** passes and the smoke test passes against the stack started by `docker compose up`.
+## See it working
+In your project folder (with a Dockerfile and a `.env`): `docker compose up -d --build`, then `docker compose ps` (all services healthy), then run the day 56 smoke test against http://127.0.0.1:8000.
+
+Press **Check** under the editor to see the rules a reliable compose file follows.

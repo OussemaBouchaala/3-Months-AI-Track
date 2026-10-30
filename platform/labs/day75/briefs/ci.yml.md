@@ -17,14 +17,14 @@ for cmd in steps:
 
 Each step's exit code decides whether the next one runs. That's why your smoke test returns 1 on failure.
 
-## Your mission
-Add CI to your project repository.
+## How to read this file
+The file in the editor is a complete GitHub Actions workflow. Read it top to bottom; the comments explain each part:
 
-## Steps
-1. Triggers: push to main, pull requests.
-2. The test job: checkout, setup-python with cache, install, `ruff check .`, `python -m pytest -q`.
-3. The docker job with `needs: test`.
-4. Copy it to `.github/workflows/ci.yml` in your project, push, and watch the Actions tab. Fix until green.
+1. **`on:`**: when it runs (pushes to main, pull requests).
+2. **The `test` job**: checkout, Python with a pip cache, install, `ruff check .`, `python -m pytest -q`. Each step's exit code decides whether the next one runs.
+3. **The `docker` job** with `needs: test`: the image is only built when the tests pass.
 
-## Done when
-**Check** passes and the badge on your repository is green.
+## See it working
+Copy it to `.github/workflows/ci.yml` in your project repository, push, and open the **Actions** tab on GitHub. A green run means lint, tests and build all passed; a red one shows which step failed.
+
+Press **Check** under the editor to see the rules a useful CI workflow follows.

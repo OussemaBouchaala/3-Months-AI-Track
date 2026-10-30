@@ -1,25 +1,51 @@
 # The whole system with one command: docker compose up -d
-# Copy this file to the root of your project repository (next to your Dockerfile).
+# Three services (database, model server, API) that find each other by service name.
 services:
+  # Postgres with the pgvector extension: your chunks and their embeddings.
   db:
     image: pgvector/pgvector:pg16
     environment:
+      # ${VAR:-default}: taken from your .env or shell, "bench" if unset.
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bench}
       POSTGRES_DB: rag
-    # TODO: a named volume for /var/lib/postgresql/data, so the index survives a restart
-    # TODO: a healthcheck with pg_isready (-U postgres -d rag), interval 5s, retries 10
+    volumes:
+      # A named volume: the data survives "docker compose down" and image updates.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # "healthy" only once Postgres really accepts connections, not just when the container started.
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rag"]
+      interval: 5s
+      retries: 10
 
+  # The local model server. Its models (several GB) live in a volume, downloaded once.
   ollama:
     image: ollama/ollama
-    # TODO: a named volume for /root/.ollama, so models aren't downloaded again
+    volumes:
+      - ollama:/root/.ollama
 
+  # Your FastAPI service, built from the Dockerfile in this folder.
   api:
-    # TODO: build from the Dockerfile in this folder (build: .)
-    # TODO: publish port 8000
-    # TODO: env_file: .env   (secrets stay out of this file)
-    # TODO: environment: DATABASE_URL and OLLAMA_URL pointing at the service names db and ollama, not localhost
-    # TODO: depends_on db with condition: service_healthy, and ollama
-    # TODO: restart: unless-stopped
-    # TODO: a healthcheck calling http://localhost:8000/health
+    build: .
+    ports:
+      - "8000:8000"            # host:container, so http://localhost:8000 reaches it
+    env_file: .env             # API keys and settings (day 72), never written in this file
+    environment:
+      # Inside the compose network, "db" and "ollama" are host names: not localhost.
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-bench}@db:5432/rag
+      OLLAMA_URL: http://ollama:11434
+    depends_on:
+      db:
+        condition: service_healthy     # wait for the health check, not just the start
+      ollama:
+        condition: service_started
+    restart: unless-stopped            # comes back after a crash or a PC reboot
+    healthcheck:
+      # Calls the API's own /health route (day 55) with Python, since the image has no curl.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      retries: 5
 
-# TODO: declare the named volumes here
+# Named volumes declared once here, used by the services above.
+volumes:
+  pgdata:
+  ollama:
