@@ -1,8 +1,20 @@
 # Write up the agent
 **Topic:** a one-page report with numbers and failures is worth more than a demo that "works".
 
+## How this report is built
+The file in the editor is a complete example report for the week's visit-booking agent. Read it section by section and notice what each one does:
+
+1. **What the agent does**: who uses it, what it can do, and what it **refuses** to do.
+2. **Tools**: one bullet per tool, marked *read* (harmless) or *write* (changes the world).
+3. **Results**: numbers first: `7/10 scenarios (70%)`, average steps, forbidden actions.
+4. **Failures**: concrete cases, each with what happened in the trace and **why**.
+5. **Guardrails**: what stops a bad action even when the model gets it wrong.
+6. **Next**: one change, and how you would measure that it helped.
+
+No "robust", no "smart": a reader trusts numbers and named failures, not adjectives.
+
 ## Real example
-How a short, honest results paragraph reads (a different project: a meeting-scheduler agent):
+The same style on a different project, a meeting-scheduler agent:
 
 ```python
 report = """## Results
@@ -14,19 +26,7 @@ report = """## Results
 """
 import re
 print(report)
-print("has a percentage:", bool(re.search(r"\\d+\\s*%", report)))
+print("has a percentage:", bool(re.search(r"\d+\s*%", report)))
 ```
 
-Numbers first, then concrete failures with the cause. No adjectives like "robust" or "smart".
-
-## Your mission
-Write the Week 5 report from your Saturday results.
-
-## Steps
-1. Fill every section; delete the `<!-- TODO -->` comments.
-2. Results: the success rate as a percentage, and the number of scenarios.
-3. Failures: at least 2, each with what happened and why.
-4. Commit it next to your code.
-
-## Done when
-**Check** confirms every section is filled, with numbers and at least 2 failures.
+Press **Check** under the editor to see the rules a good report follows.

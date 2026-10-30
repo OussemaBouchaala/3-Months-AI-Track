@@ -18,11 +18,13 @@ print("best:", best.split("|")[1].strip())
 
 Each row adds one change, so each delta has a cause. A reader sees in five seconds what mattered.
 
-## Your mission
-Write the Phase 1 report from your Week 6 numbers (the table from Saturday's `arabic_eval.py`).
+## How to read this report
+The file in the editor is a complete example Phase 1 report. Read it section by section:
 
-## Steps
-1. Fill every section and delete the `<!-- TODO -->` comments.
-2. Results: a Markdown table with a header and at least 2 configurations, real numbers.
-3. What worked / What didn't: tie each bullet to a number or an example.
-4. Next: what Phase 2 keeps and what it changes. Commit it.
+1. **Data**: what was indexed and what it was tested on, with counts.
+2. **Pipeline**: the steps, in order, in one short list.
+3. **Results**: one table, where each row adds **one** change, so each gain has a cause.
+4. **What worked / What didn't**: every bullet points to a number or a real example.
+5. **Next**: what Phase 2 keeps and what it changes.
+
+Press **Check** under the editor to see the rules a good report follows.
