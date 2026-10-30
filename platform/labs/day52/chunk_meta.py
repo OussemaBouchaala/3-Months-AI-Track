@@ -133,7 +133,8 @@ def run_on_my_docs(parsed="../day50/parsed.jsonl", out="chunks.json"):
 
 if __name__ == "__main__":
     from pathlib import Path
-    if Path("../day50/parsed.jsonl").exists():
+    parsed = Path("../day50/parsed.jsonl")
+    if parsed.exists() and parsed.stat().st_size > 0:
         run_on_my_docs()
     else:
         # No parsed.jsonl yet: two contracts that share a clause.

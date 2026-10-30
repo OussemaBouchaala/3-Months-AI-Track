@@ -14,14 +14,12 @@ for text, sev, users in sorted(issues, key=lambda i: (order[i[1]], -i[2])):
 
 Severity says how bad it is; the user count says how common. Fix high and common first.
 
-## Your mission
-Write up Saturday's test and what you changed because of it.
+## How to read this example
+An example usability report after testing the chat page with real users. Notice how it's built:
 
-## Steps
-1. Participants and tasks, as run.
-2. Results: the task table and the mean SUS with its grade.
-3. Issues: 3 or more, each `[high]`, `[medium]` or `[low]`, with how many users hit it.
-4. Changes made this weekend, and what Week 10 should measure.
+1. **Participants and tasks**, as they were run.
+2. **Results**: a task table (success, time) and the mean SUS score with its grade (day 62).
+3. **Issues** ranked `[high]`, `[medium]`, `[low]`, each with how many users hit it.
+4. **Changes made** because of the test, and what week 10 should measure.
 
-## Done when
-**Check** passes and at least one high-severity issue is fixed.
+Press **Check** under the editor to see the rules a good version follows. When you write your own, keep this structure and use your real numbers.

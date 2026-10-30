@@ -225,6 +225,9 @@ def run_on_my_docs(folder="../docs", out="parsed.jsonl"):
         >>> run_on_my_docs()  # doctest: +SKIP
     """
     import json
+    if not Path(folder).is_dir():
+        print(f"No folder {folder} yet: put your client's documents there first.")
+        return
     docs, skipped = parse_folder(folder)
     Path(out).write_text("".join(json.dumps(d, ensure_ascii=False) + "\n" for d in docs), encoding="utf-8")
     print(len(docs), "parsed;", len(skipped), "skipped:", skipped)

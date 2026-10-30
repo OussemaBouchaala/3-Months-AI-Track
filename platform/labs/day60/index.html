@@ -1,7 +1,12 @@
 <!doctype html>
 <html lang="fr">
+<!--
+  The agent's chat page: one HTML file, no framework, served by the day 58 chat service.
+  Read it top to bottom: the form, then the script (addMessage, postJSON, addSources, addConfirm, submit).
+-->
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8">                <!-- Arabic and French characters display correctly -->
+  <!-- the viewport line makes the page readable on a phone -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Assistant</title>
   <style>
@@ -19,21 +24,101 @@
 <body>
   <h1>Assistant</h1>
   <div id="log"></div>
+  <!-- dir="auto": the browser writes Arabic right-to-left and French left-to-right, by itself -->
   <form id="form">
-    <!-- TODO: a textarea with id="message" (dir="auto") and a submit button with id="send" -->
+    <textarea id="message" dir="auto" placeholder="Question du client..." required></textarea>
+    <button id="send" type="submit">Envoyer</button>
   </form>
 
   <script>
-    // TODO 1. let sessionId = null;
-    // TODO 2. addMessage(text, who): create a div.msg.<who>, set dir="auto", put the text with textContent
-    //         (NEVER innerHTML with model output: an answer containing <img onerror=...> would run code), append to #log.
-    // TODO 3. On submit: prevent the reload, read and clear the textarea, show the user message,
-    //         disable the button while waiting, POST JSON {message, session_id: sessionId} to "/chat".
-    //         If the response is not ok, show "Erreur, réessayez." Keep the session_id from the reply.
-    // TODO 4. Show reply.answer. If reply.sources: a div.sources listing "[n] title > section" (textContent again).
-    // TODO 5. If reply.type === "confirm": add a "Confirmer" button that POSTs {session_id, action_id} to "/chat/confirm"
-    //         and shows the result status; disable it after one click.
-    // TODO 6. Re-enable the button in a finally block, so an error never leaves the form stuck.
+    // The conversation id. null = the server starts a new session and sends us its id.
+    let sessionId = null;
+    const log = document.getElementById("log");
+    const input = document.getElementById("message");
+    const send = document.getElementById("send");
+
+    // Add one bubble to the log. textContent shows the text AS TEXT: an answer containing
+    // <img onerror=...> is displayed, never run. Never put model output in HTML directly.
+    function addMessage(text, who) {
+      const div = document.createElement("div");
+      div.className = "msg " + who;
+      div.dir = "auto";
+      div.textContent = text;
+      log.appendChild(div);
+      div.scrollIntoView({ behavior: "smooth" });
+      return div;
+    }
+
+    // POST a JSON body, return the JSON reply. A non-2xx status (422, 503...) throws,
+    // so every caller handles errors in one place: its catch.
+    async function postJSON(url, body) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+
+    // Under the answer: one line per cited source, "[1] Règlement > Caution".
+    function addSources(div, sources) {
+      const box = document.createElement("div");
+      box.className = "sources";
+      box.textContent = sources
+        .map(s => `[${s.n}] ${s.title || s.doc_id || s.id}${s.section ? " > " + s.section : ""}`)
+        .join("\n");
+      div.appendChild(box);
+    }
+
+    // A booking was proposed (day 57): a "Confirmer" button. Disabled on click so a double click
+    // sends one request; re-enabled only if the request failed, so the agent can retry.
+    function addConfirm(div, actionId) {
+      const btn = document.createElement("button");
+      btn.textContent = "Confirmer";
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        try {
+          const r = await postJSON("/chat/confirm", { session_id: sessionId, action_id: actionId });
+          addMessage(r.status === "done" || r.status === "already_done" ? "C'est fait." : "Statut : " + r.status, "bot");
+        } catch (err) {
+          addMessage("Erreur, réessayez.", "bot");
+          btn.disabled = false;
+        }
+      });
+      div.appendChild(document.createElement("br"));
+      div.appendChild(btn);
+    }
+
+    // Sending a message: show it, call /chat, show the reply (and sources / confirm button).
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();                 // a form submit would reload the page
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
+      addMessage(text, "user");
+      send.disabled = true;
+      try {
+        const reply = await postJSON("/chat", { message: text, session_id: sessionId });
+        sessionId = reply.session_id;     // keep it: the next message continues this conversation
+        const div = addMessage(reply.answer, "bot");
+        if (reply.sources && reply.sources.length) addSources(div, reply.sources);
+        if (reply.type === "confirm") addConfirm(div, reply.action_id);
+      } catch (err) {
+        addMessage("Erreur, réessayez.", "bot");
+      } finally {                         // runs after success AND after an error: the form never stays stuck
+        send.disabled = false;
+        input.focus();
+      }
+    });
+
+    // Enter sends, Shift+Enter makes a new line (what people expect from a chat).
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById("form").requestSubmit();
+      }
+    });
   </script>
 </body>
 </html>

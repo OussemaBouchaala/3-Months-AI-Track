@@ -147,7 +147,7 @@ def run(body: RunIn):
         proc = subprocess.run(
             [sys.executable, str(ROOT / "runner.py"), str(target), str(fig_dir)],
             cwd=day_dir, capture_output=True, text=True, encoding="utf-8",
-            errors="replace", timeout=RUN_TIMEOUT, env=env,
+            errors="replace", timeout=RUN_TIMEOUT, env=env, stdin=subprocess.DEVNULL,
         )
         stdout, stderr, code, timed_out = proc.stdout, proc.stderr, proc.returncode, False
     except subprocess.TimeoutExpired as exc:
@@ -207,7 +207,7 @@ def check(body: CheckIn):
         proc = subprocess.run(
             [sys.executable, str(ROOT / "checker.py"), str(target), str(checks)],
             cwd=target.parent, capture_output=True, text=True, encoding="utf-8",
-            errors="replace", timeout=RUN_TIMEOUT, env=env,
+            errors="replace", timeout=RUN_TIMEOUT, env=env, stdin=subprocess.DEVNULL,
         )
     except subprocess.TimeoutExpired:
         return {"results": [{"label": "Checks finished in time", "ok": False,
@@ -283,7 +283,7 @@ def run_example(body: ExampleIn):
         proc = subprocess.run(
             [sys.executable, str(ROOT / "walkthrough.py"), str(target), body.step],
             cwd=target.parent, capture_output=True, text=True, encoding="utf-8",
-            errors="replace", timeout=RUN_TIMEOUT, env=env,
+            errors="replace", timeout=RUN_TIMEOUT, env=env, stdin=subprocess.DEVNULL,
         )
     except subprocess.TimeoutExpired:
         return {"error": f"Stopped after {RUN_TIMEOUT}s."}
