@@ -140,7 +140,7 @@ def run(body: RunIn):
         target.write_text(body.code, encoding="utf-8")
 
     fig_dir = Path(tempfile.mkdtemp(prefix="bench_figs_"))
-    env = {**os.environ, "MPLBACKEND": "Agg", "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1",
+    env = {**os.environ, "MPLBACKEND": "Agg", "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1", "BENCH_RUN": "1",
            "PYTHONPATH": os.pathsep.join(filter(None, [str(ROOT), os.environ.get("PYTHONPATH", "")]))}
     start = time.perf_counter()
     try:
@@ -200,7 +200,7 @@ def check(body: CheckIn):
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(body.code, encoding="utf-8")
 
-    env = {**os.environ, "MPLBACKEND": "Agg", "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1",
+    env = {**os.environ, "MPLBACKEND": "Agg", "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1", "BENCH_RUN": "1",
            "PYTHONPATH": os.pathsep.join(filter(None, [str(ROOT), os.environ.get("PYTHONPATH", "")]))}
     start = time.perf_counter()
     try:
@@ -277,7 +277,7 @@ def run_example(body: ExampleIn):
         raise HTTPException(400, "Invalid example.")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(body.code, encoding="utf-8")
-    env = {**os.environ, "MPLBACKEND": "Agg", "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1",
+    env = {**os.environ, "MPLBACKEND": "Agg", "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1", "BENCH_RUN": "1",
            "PYTHONPATH": os.pathsep.join(filter(None, [str(ROOT), os.environ.get("PYTHONPATH", "")]))}
     try:
         proc = subprocess.run(

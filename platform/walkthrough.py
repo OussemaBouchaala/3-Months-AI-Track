@@ -50,7 +50,11 @@ def _split_doc(doc: str):
     if m:
         text.pop()
         note = m.group(1) or ""
-    examples = [{"source": e.source.rstrip("\n"), "want": e.want.replace("<BLANKLINE>", "").rstrip("\n")}
+    # "# doctest: +SKIP" marks an example whose output depends on your own files: it still
+    # runs, but its output is shown as it is instead of being compared.
+    examples = [{"source": re.sub(r"\s*# doctest:.*$", "", e.source.rstrip("\n"), flags=re.M),
+                 "want": e.want.replace("<BLANKLINE>", "").rstrip("\n"),
+                 "yours": bool(e.options.get(doctest.SKIP))}
                 for e in _parser.get_examples(doc)]
     return "\n".join(text).strip(), examples, note
 
@@ -131,7 +135,7 @@ def run_examples(path: str, qualname: str) -> list:
         except Exception as exc:
             tb = traceback.format_exception_only(type(exc), exc)[-1].strip()
             got, error = (buf.getvalue() + tb).rstrip("\n"), True
-        ok = ex["want"] == "" if not got else _normalize(got) == _normalize(ex["want"])
+        ok = ex["yours"] or (ex["want"] == "" if not got else _normalize(got) == _normalize(ex["want"]))
         if ex["want"].startswith("Traceback"):
             ok = error and _normalize(ex["want"].splitlines()[-1]) == _normalize(got.splitlines()[-1])
         results.append({**ex, "got": got, "ok": ok, "error": error})

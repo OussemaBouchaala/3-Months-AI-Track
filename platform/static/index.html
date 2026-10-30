@@ -990,7 +990,7 @@ async function guideStudy() {
         await flushSave();
         const r = await api("/api/example", { day: d.folder, name: f.name, code: await studyCode(d, f), step: t.dataset.runex });
         box.innerHTML = r.error ? `<div class="wt-ex"><span class="got bad">${esc(r.error)}</span></div>`
-          : `<div class="wt-ex">${r.results.map(x => `${esc(">>> " + x.source.replace(/\n/g, "\n... "))}${x.got || x.want ? `\n<span class="got ${x.error ? "bad" : ""}">${esc(x.got || "(nothing printed)")}</span>` : ""}${!x.ok && x.want && !x.error ? `\n<span class="note">the docstring says: ${esc(x.want)}</span>` : ""}`).join("\n")}</div>`;
+          : `<div class="wt-ex">${r.results.map(x => `${esc(">>> " + x.source.replace(/\n/g, "\n... "))}${x.got || x.want ? `\n<span class="got ${x.error ? "bad" : ""}">${esc(x.got || "(nothing printed)")}</span>` : ""}${x.yours ? `\n<span class="note">(from your own files, so yours may differ)</span>` : ""}${!x.ok && x.want && !x.error ? `\n<span class="note">the docstring says: ${esc(x.want)}</span>` : ""}`).join("\n")}</div>`;
         logActivity();
       } catch (err) { box.innerHTML = `<div class="wt-ex"><span class="got bad">${esc(err.message)}</span></div>`; }
       t.disabled = false; t.textContent = "Run again ▶"; return;
