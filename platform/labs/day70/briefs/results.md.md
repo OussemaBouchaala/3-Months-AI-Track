@@ -13,14 +13,12 @@ print(rec)
 
 Choice, evidence with intervals, why it beats the alternative, and the trade-off you accept. Four sentences.
 
-## Your mission
-Write Week 10's results page from Saturday's table, Thursday's taxonomy and Wednesday's cost model.
+## How to read this example
+An example evaluation report for week 10. Notice how it's built:
 
-## Steps
-1. Setup: test set size, languages, configs, judge, date.
-2. Results: paste the table with intervals.
-3. Recommendation with its trade-off; Failures with counts and examples; Cost per month.
-4. Limitations: what this evaluation can't tell you.
+1. **Setup**: test set size, languages, configs, judge, date: enough for someone to repeat it.
+2. **Results** with confidence intervals (day 66), so small differences aren't over-read.
+3. **Recommendation** with its trade-off, checked against the targets.
+4. **Failures** with counts and examples (day 68), **cost** per month (day 67), and **limitations**: what this evaluation can't tell you.
 
-## Done when
-**Check** passes. This page goes into your README in Week 11 and your demo in Week 12.
+Press **Check** under the editor to see the rules a good version follows. When you write your own, keep this structure and use your real numbers.
