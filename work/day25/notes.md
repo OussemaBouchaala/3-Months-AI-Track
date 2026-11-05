@@ -1,0 +1,2 @@
+the judge's typical mistake is leniency bias—it says "yes" (1) to everything, just like our lazy grader in the scratchpad.
+To fix the leniency bias (where it passes everything), you update the rubric in your prompt to enforce strict negative conditions.

@@ -1,0 +1,15 @@
+# Postgres with the pgvector extension, for this week's vector search.
+# Start it in a terminal from this folder:  docker compose up -d
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_PASSWORD: bench
+      POSTGRES_DB: rag
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

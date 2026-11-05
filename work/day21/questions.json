@@ -1,0 +1,56 @@
+[
+  {"question": "How much commission does a buyer pay?", "lang": "en",
+   "answer": "2% of the final sale price, plus VAT, due at the notary signing.", "source_ids": ["c0"]},
+  {"question": "Combien de temps faut-il pour récupérer la caution ?", "lang": "fr",
+   "answer": "Au plus 30 jours après la remise des clés, moins les réparations éventuelles.", "source_ids": ["c2"]},
+  {"question": "هل تبيع الوكالة السيارات؟", "lang": "ar",
+   "answer": "", "source_ids": []},
+  { "question": "What are the agency fees for renting out a property?", "lang": "en", "answer": "For a tenant, it is one month rent (excluding charges). For the landlord, it is also one month rent.", "source_ids": [ "c1" ] }, 
+  { "question": "Combien coûte un séjours saisonnier ? [NOTE: This is a trap, seasonal fees are 10%, but let's ask about the deposit instead]", "lang": "fr", "answer": "Le dépôt est de deux mois de loyer.", "source_ids": [ "c2" ]},    
+   { "question": "هل يمكنني إلغاء الزيارة مجانا؟", "lang": "ar", "answer": "نعم، مجانًا ما دام قبل الموعد بـ 2 ساعات على الأقل.", "source_ids": [ "c4" ] }, 
+  { "question": "Can I visit a property without an agent accompanying me?", "lang": "en", "answer": "No, an agent always accompanies the visitor; keys are never handed over for an unaccompanied visit.", "source_ids": [ "c3" ] },
+  { "question": "Can the landlord increase the rent during the first year of the lease?", "lang": "en", "answer": "No, annual rent cannot be increased during the first year.", "source_ids": [ "c6" ] }, 
+  { "question": "Qui paie les réparations de la plomberie principale ?", "lang": "fr", "answer": "Le propriétaire (l'agence/intervenant pour le compte du propriétaire) paie les grosses réparations comme la plomberie.", "source_ids": [ "c7" ] }, 
+   { "question": "هل أقبل الدفع بالبطاقة؟", "lang": "ar", "answer": "نعم، الدفع بالبطاقة مقبول للإيجارات الموسمية فقط.", "source_ids": [ "c8" ] }, 
+  { "question": "How much can the annual rent increase after the first year?", "lang": "en", "answer": "It cannot exceed 5% of the current rent.", "source_ids": [ "c6" ] },
+  { "question": "What is the penalty if the seller cancels a sale promise without reason?", "lang": "en", "answer": "The seller must refund double the deposit to the buyer.", "source_ids": [ "c10" ] }, 
+  { "question": "Combien coûte une évaluation si je ne mets pas mon bien en vente chez vous ?", "lang": "fr", "answer": "150 TND.", "source_ids": [ "c11" ] }, 
+   { "question": "ما هي ساعات العمل في شهر رمضان؟", "lang": "ar", "answer": "من التاسعة صباحًا إلى الثالثة بعد الظهر.", "source_ids": [ "c12" ] }, 
+  { "question": "What happens to my deposit if I cancel the sale promise without a valid reason?", "lang": "en", "answer": "The deposit of 10% remains with the seller.", "source_ids": [ "c10" ] },
+  {
+    "question": "How long does it take to get authorization to buy a flat as a foreigner?",
+    "lang": "en",
+    "answer": "The process usually takes 3 to 12 months.",
+    "source_ids": [
+      "c9"
+    ]
+  },
+  {
+    "question": "Dans quel délai l'agence intervient-elle sur une urgence technique ? (In what timeframe does the agency intervene on a technical emergency?)",
+    "lang": "fr",
+    "answer": "L'agence intervient dans un délai de 48 heures.",
+    "source_ids": [
+      "c7"
+    ]
+  },
+  {
+    "question": "بأي عملة يمكن للأجنبي دفع الإيجار؟ (In which currency can a foreigner pay rent?)",
+    "lang": "ar",
+    "answer": "You can pay in TND or EUR via bank transfer.",
+    "source_ids": [
+      "c8"
+    ]
+  },
+  {
+    "question": "Does the agency provide pet insurance for rental properties?",
+    "lang": "en",
+    "answer": "",
+    "source_ids": []
+  },
+  {
+    "question": "What is the exact late fee amount for paying rent 5 days late?",
+    "lang": "en",
+    "answer": "",
+    "source_ids": []
+  }
+]

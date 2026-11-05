@@ -1,0 +1,1 @@
+when searching for exact terms so keyword search BM25 wins and when we search for a meaning or multilingual thing so vectors win
